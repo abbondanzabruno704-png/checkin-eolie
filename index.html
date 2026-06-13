@@ -65,7 +65,9 @@ function mostra(testo, colore, dettagli = "") {
   document.body.style.background = colore;
   document.getElementById("esito").innerHTML = testo;
   document.getElementById("dettagli").innerHTML = dettagli;
-  document.getElementById("btn").style.display = "block";
+  document.getElementById("btn").style.display = "none";
+
+  riavviaAutomatico();
 }
 
 function verifica(codice) {
@@ -132,6 +134,7 @@ function avviaScanner() {
   document.getElementById("esito").innerHTML = "SCANNER ATTIVO";
   document.getElementById("dettagli").innerHTML = "";
   document.getElementById("btn").style.display = "none";
+  document.getElementById("reader").innerHTML = "";
   bloccato = false;
 
   scanner = new Html5QrcodeScanner("reader", {
@@ -144,8 +147,14 @@ function avviaScanner() {
   });
 }
 
+function riavviaAutomatico() {
+  setTimeout(function() {
+    avviaScanner();
+  }, 2000);
+}
+
 function riavvia() {
-  location.reload();
+  avviaScanner();
 }
 
 avviaScanner();
