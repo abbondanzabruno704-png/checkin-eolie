@@ -3,86 +3,98 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Check-In Eolie</title>
-
 <script src="https://unpkg.com/html5-qrcode"></script>
-
-<style>
-body{
-font-family:Arial;
-text-align:center;
-padding:20px;
-}
-
-#reader{
-max-width:500px;
-margin:auto;
-}
-
-#esito{
-font-size:40px;
-font-weight:bold;
-margin-top:20px;
-}
-</style>
-
 </head>
 
-<body>
+<body style="font-family:Arial;text-align:center;padding:20px;">
 
 <h1>CHECK-IN EOLIE</h1>
 
-<div id="reader"></div>
+<div id="reader" style="max-width:500px;margin:auto;"></div>
 
-<div id="esito">PRONTO</div>
+<h1 id="esito">PRONTO</h1>
+<p id="dettagli" style="font-size:22px;"></p>
+
+<button onclick="riavvia()" style="font-size:24px;padding:15px;width:90%;display:none;" id="btn">
+SCANSIONA ANCORA
+</button>
 
 <script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzSa99xg_10X9ya-ArSujIRyfZ2yJiU52a9kOWpayixU3Nc0Im3ij1lR2yHXYTxo_g5GA/exec";
 
-const API_URL =
-"https://script.google.com/macros/s/AKfycbzSa99xg_10X9ya-ArSujIRyfZ2yJiU52a9kOWpayixU3Nc0Im3ij1lR2yHXYTxo_g5GA/exec";
+let scanner;
+let bloccato = false;
 
-function verifica(codice){
-
-fetch(API_URL + "?codice=" + encodeURIComponent(codice))
-.then(r=>r.json())
-.then(d=>{
-
-if(d.esito==="VALIDO"){
-document.body.style.background="#00c853";
-document.getElementById("esito").innerHTML="✅ IMBARCO OK";
-return;
+function mostra(testo, colore, dettagli="") {
+  document.body.style.background = colore;
+  document.getElementById("esito").innerHTML = testo;
+  document.getElementById("dettagli").innerHTML = dettagli;
+  document.getElementById("btn").style.display = "block";
 }
 
-if(d.esito==="ANNULLATO"){
-document.body.style.background="#ff1744";
-document.getElementById("esito").innerHTML="❌ ANNULLATO";
-return;
+function verifica(codice) {
+  if (bloccato) return;
+  bloccato = true;
+
+  document.getElementById("esito").innerHTML = "CONTROLLO...";
+  document.getElementById("dettagli").innerHTML = codice;
+  document.body.style.background = "white";
+
+  scanner.clear();
+
+  fetch(API_URL + "?codice=" + encodeURIComponent(codice))
+    .then(r => r.text())
+    .then(t => {
+      let d = JSON.parse(t);
+
+      if (d.esito === "VALIDO") {
+        mostra("✅ IMBARCO OK", "#00c853",
+          "Ticket: " + (d.ticket || "") + "<br>" +
+          "Nome: " + (d.nome || "") + " " + (d.cognome || "") + "<br>" +
+          "Corsa: " + (d.corsa || "")
+        );
+        return;
+      }
+
+      if (d.esito === "ANNULLATO") {
+        mostra("❌ BIGLIETTO ANNULLATO", "#ff1744");
+        return;
+      }
+
+      if (d.esito === "GIA_USATO") {
+        mostra("⚠️ GIÀ UTILIZZATO", "#ffd600");
+        return;
+      }
+
+      mostra("❌ NON TROVATO", "#ff1744");
+    })
+    .catch(err => {
+      mostra("❌ ERRORE COLLEGAMENTO", "#ff1744", err);
+    });
 }
 
-if(d.esito==="GIA_USATO"){
-document.body.style.background="#ffd600";
-document.getElementById("esito").innerHTML="⚠️ GIÀ UTILIZZATO";
-return;
+function avviaScanner() {
+  document.body.style.background = "white";
+  document.getElementById("esito").innerHTML = "SCANNER ATTIVO";
+  document.getElementById("dettagli").innerHTML = "";
+  document.getElementById("btn").style.display = "none";
+  bloccato = false;
+
+  scanner = new Html5QrcodeScanner("reader", {
+    fps: 10,
+    qrbox: 250
+  });
+
+  scanner.render(function(decodedText) {
+    verifica(decodedText);
+  });
 }
 
-document.body.style.background="#ff1744";
-document.getElementById("esito").innerHTML="❌ NON TROVATO";
-
-});
-
+function riavvia() {
+  location.reload();
 }
 
-const scanner = new Html5QrcodeScanner(
-"reader",
-{
-fps:10,
-qrbox:250
-}
-);
-
-scanner.render(function(decodedText){
-verifica(decodedText);
-});
-
+avviaScanner();
 </script>
 
 </body>
