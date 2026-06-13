@@ -63,6 +63,10 @@ input, button{
   margin-bottom:12px;
 }
 
+#menuOperazioni{
+  display:none;
+}
+
 #listaBox{
   display:none;
   background:white;
@@ -116,21 +120,29 @@ input, button{
   <button onclick="verificaManuale()">VERIFICA MANUALE</button>
 </div>
 
-<button onclick="mostraLista('imbarcati')" id="listaImbarcatiBtn" style="display:none;">
-✅ LISTA IMBARCATI
+<button onclick="toggleMenu()" id="menuBtn" style="display:none;">
+☰ MENU
 </button>
 
-<button onclick="mostraLista('mancanti')" id="listaMancantiBtn" style="display:none;">
-⏳ LISTA MANCANTI
-</button>
+<div id="menuOperazioni">
 
-<button onclick="mostraReport()" id="reportBtn" style="display:none;">
+<button onclick="mostraReport()">
 📄 REPORT FINE CORSA
 </button>
 
-<button onclick="terminaCorsa()" id="chiudiBtn" style="display:none;background:#333;color:white;">
+<button onclick="mostraLista('imbarcati')">
+✅ LISTA IMBARCATI
+</button>
+
+<button onclick="mostraLista('mancanti')">
+⏳ LISTA MANCANTI
+</button>
+
+<button onclick="terminaCorsa()" style="background:#333;color:white;">
 🛑 TERMINA CORSA
 </button>
+
+</div>
 
 <div id="reader" style="display:none;"></div>
 
@@ -155,6 +167,16 @@ let operatoreAttivo = "";
 let ultimoReport = null;
 let timerStats = null;
 let timerRiavvio = null;
+
+function toggleMenu() {
+  const menu = document.getElementById("menuOperazioni");
+
+  if (menu.style.display === "none" || menu.style.display === "") {
+    menu.style.display = "block";
+  } else {
+    menu.style.display = "none";
+  }
+}
 
 function accedi() {
   const p = document.getElementById("password").value;
@@ -217,10 +239,7 @@ function iniziaCheckin() {
   document.getElementById("startBtn").style.display = "none";
 
   document.getElementById("manualBox").style.display = "block";
-  document.getElementById("listaImbarcatiBtn").style.display = "inline-block";
-  document.getElementById("listaMancantiBtn").style.display = "inline-block";
-  document.getElementById("reportBtn").style.display = "inline-block";
-  document.getElementById("chiudiBtn").style.display = "inline-block";
+  document.getElementById("menuBtn").style.display = "inline-block";
   document.getElementById("reader").style.display = "block";
 
   aggiornaStatistiche();
@@ -393,10 +412,8 @@ function terminaCorsa() {
     document.getElementById("reader").innerHTML = "";
     document.getElementById("reader").style.display = "none";
     document.getElementById("manualBox").style.display = "none";
-    document.getElementById("listaImbarcatiBtn").style.display = "none";
-    document.getElementById("listaMancantiBtn").style.display = "none";
-    document.getElementById("reportBtn").style.display = "none";
-    document.getElementById("chiudiBtn").style.display = "none";
+    document.getElementById("menuBtn").style.display = "none";
+    document.getElementById("menuOperazioni").style.display = "none";
     document.getElementById("listaBox").style.display = "none";
 
     document.body.style.background = "#e0e0e0";
