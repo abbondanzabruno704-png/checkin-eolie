@@ -26,7 +26,21 @@ h1{ font-size:42px; }
   margin-top:20px;
 }
 
-#dettagli{ font-size:24px; }
+#dettagli{
+  font-size:30px;
+  font-weight:bold;
+  line-height:1.4;
+}
+
+.nomeGrande{
+  font-size:42px;
+  font-weight:bold;
+}
+
+.info{
+  font-size:26px;
+  font-weight:normal;
+}
 
 input, button{
   font-size:24px;
@@ -43,6 +57,8 @@ input, button{
 
 <h1>CHECK-IN EOLIE</h1>
 
+<input id="operatore" placeholder="Nome operatore">
+
 <input id="corsa" placeholder="Scrivi corsa es: SAL-PAN-STR-16">
 
 <button onclick="iniziaCheckin()" id="startBtn">
@@ -51,7 +67,7 @@ INIZIA CHECK-IN
 
 <div id="reader" style="display:none;"></div>
 
-<h1 id="esito">INSERISCI CORSA</h1>
+<h1 id="esito">INSERISCI OPERATORE E CORSA</h1>
 <p id="dettagli"></p>
 
 <script>
@@ -61,6 +77,7 @@ let scanner;
 let bloccato = false;
 let audioCtx = null;
 let corsaAttiva = "";
+let operatoreAttivo = "";
 
 function preparaAudio() {
   if (!audioCtx) {
@@ -91,7 +108,13 @@ function beepGiaUsato(){
 function beepErrore(){ beep(400,700); }
 
 function iniziaCheckin() {
+  operatoreAttivo = document.getElementById("operatore").value.trim();
   corsaAttiva = document.getElementById("corsa").value.trim();
+
+  if (operatoreAttivo === "") {
+    alert("Inserisci il nome operatore");
+    return;
+  }
 
   if (corsaAttiva === "") {
     alert("Inserisci prima la corsa");
@@ -100,6 +123,7 @@ function iniziaCheckin() {
 
   preparaAudio();
 
+  document.getElementById("operatore").style.display = "none";
   document.getElementById("corsa").style.display = "none";
   document.getElementById("startBtn").style.display = "none";
   document.getElementById("reader").style.display = "block";
@@ -137,9 +161,10 @@ function verifica(codice) {
       mostra(
         "✅ IMBARCO OK",
         "#00c853",
-        "Ticket: " + (d.ticket || "") + "<br>" +
-        "Nome: " + (d.nome || "") + " " + (d.cognome || "") + "<br>" +
-        "Corsa: " + (d.corsa || "")
+        "<span class='nomeGrande'>" + (d.nome || "") + " " + (d.cognome || "") + "</span><br>" +
+        "<span class='info'>Ticket: " + (d.ticket || "") + "</span><br>" +
+        "<span class='info'>Corsa: " + (d.corsa || "") + "</span><br>" +
+        "<span class='info'>Operatore: " + operatoreAttivo + "</span>"
       );
       return;
     }
@@ -181,6 +206,7 @@ function verifica(codice) {
   script.src = API_URL
     + "?codice=" + encodeURIComponent(codice)
     + "&corsa=" + encodeURIComponent(corsaAttiva)
+    + "&operatore=" + encodeURIComponent(operatoreAttivo)
     + "&callback=" + callbackName;
 
   script.onerror = function() {
@@ -193,7 +219,9 @@ function verifica(codice) {
 
 function avviaScanner() {
   document.body.style.background = "white";
-  document.getElementById("esito").innerHTML = "SCANNER ATTIVO<br><small>" + corsaAttiva + "</small>";
+  document.getElementById("esito").innerHTML =
+    "SCANNER ATTIVO<br><small>" + corsaAttiva + "</small><br><small>Operatore: " + operatoreAttivo + "</small>";
+
   document.getElementById("dettagli").innerHTML = "";
   document.getElementById("reader").innerHTML = "";
   bloccato = false;
@@ -216,4 +244,5 @@ function riavviaAutomatico() {
 </script>
 
 </body>
+</html>
 </html>
