@@ -60,6 +60,47 @@ const API_URL = "https://script.google.com/macros/s/AKfycbyMqWkwY5AwMRV46eHsKdpp
 
 let scanner;
 let bloccato = false;
+let audioCtx = null;
+
+function preparaAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+}
+
+function beep(freq, durata) {
+  preparaAudio();
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.frequency.value = freq;
+  gain.gain.value = 0.25;
+
+  osc.start();
+  osc.stop(audioCtx.currentTime + durata / 1000);
+}
+
+function beepValido() {
+  beep(1200, 150);
+}
+
+function beepGiaUsato() {
+  beep(1000, 120);
+  setTimeout(function() {
+    beep(1000, 120);
+  }, 220);
+}
+
+function beepErrore() {
+  beep(400, 700);
+}
 
 function mostra(testo, colore, dettagli = "") {
   document.body.style.background = colore;
@@ -71,6 +112,8 @@ function mostra(testo, colore, dettagli = "") {
 }
 
 function verifica(codice) {
+  preparaAudio();
+
   if (bloccato) return;
   bloccato = true;
 
@@ -89,6 +132,7 @@ function verifica(codice) {
     delete window[callbackName];
 
     if (d.esito === "VALIDO") {
+      beepValido();
       mostra(
         "✅ IMBARCO OK",
         "#00c853",
@@ -100,20 +144,24 @@ function verifica(codice) {
     }
 
     if (d.esito === "ANNULLATO") {
+      beepErrore();
       mostra("❌ BIGLIETTO ANNULLATO", "#ff1744");
       return;
     }
 
     if (d.esito === "GIA_USATO") {
+      beepGiaUsato();
       mostra("⚠️ GIÀ UTILIZZATO", "#ffd600");
       return;
     }
 
     if (d.esito === "NO_CODICE") {
+      beepErrore();
       mostra("❌ CODICE MANCANTE", "#ff1744");
       return;
     }
 
+    beepErrore();
     mostra("❌ NON TROVATO", "#ff1744");
   };
 
@@ -123,6 +171,7 @@ function verifica(codice) {
     + "&callback=" + callbackName;
 
   script.onerror = function() {
+    beepErrore();
     mostra("❌ ERRORE COLLEGAMENTO", "#ff1744", "Apps Script non raggiungibile");
   };
 
