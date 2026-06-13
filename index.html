@@ -59,10 +59,23 @@ input, button{
   font-size:20px;
   display:none;
 }
+
+#app{
+  display:none;
+}
 </style>
 </head>
 
 <body>
+
+<div id="login">
+  <h1>CHECK-IN EOLIE</h1>
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="accedi()">ACCEDI</button>
+  <h2 id="erroreLogin"></h2>
+</div>
+
+<div id="app">
 
 <h1>CHECK-IN EOLIE</h1>
 
@@ -91,7 +104,11 @@ INIZIA CHECK-IN
 <h1 id="esito">INSERISCI OPERATORE E CORSA</h1>
 <p id="dettagli"></p>
 
+</div>
+
 <script>
+const PASSWORD = "brunoabbondanza";
+
 const API_URL = "https://script.google.com/macros/s/AKfycbyMqWkwY5AwMRV46eHsKdppn9xF8goSAZDhWJHiYlpQnVnZJ6m9oIVSdIIasryOtH6T5w/exec";
 
 let scanner;
@@ -101,6 +118,18 @@ let corsaAttiva = "";
 let operatoreAttivo = "";
 let ultimoReport = null;
 let timerStats = null;
+
+function accedi() {
+  const p = document.getElementById("password").value;
+
+  if (p === PASSWORD) {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("app").style.display = "block";
+  } else {
+    document.getElementById("erroreLogin").innerHTML = "❌ PASSWORD ERRATA";
+    document.getElementById("erroreLogin").style.color = "red";
+  }
+}
 
 function preparaAudio() {
   if (!audioCtx) {
