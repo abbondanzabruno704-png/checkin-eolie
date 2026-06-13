@@ -35,7 +35,7 @@ h1{ font-size:42px; }
 .nomeGrande{ font-size:42px; font-weight:bold; }
 .info{ font-size:26px; font-weight:normal; }
 
-input, button{
+input, button, select{
   font-size:24px;
   padding:15px;
   width:90%;
@@ -111,7 +111,9 @@ input, button{
 </div>
 
 <input id="operatore" placeholder="Nome operatore">
-<input id="corsa" placeholder="Scrivi corsa es: SAL-PAN-STR-16">
+<select id="corsa">
+  <option value="">Caricamento corse...</option>
+</select>
 
 <button onclick="iniziaCheckin()" id="startBtn">INIZIA CHECK-IN</button>
 
@@ -178,12 +180,48 @@ function toggleMenu() {
   }
 }
 
+function caricaCorse() {
+  const callbackName = "corse_" + Date.now();
+
+  window[callbackName] = function(d) {
+    delete window[callbackName];
+
+    const select = document.getElementById("corsa");
+    select.innerHTML = "";
+
+    if (!d || d.esito !== "CORSE" || !d.corse || d.corse.length === 0) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "Nessuna corsa trovata";
+      select.appendChild(opt);
+      return;
+    }
+
+    const prima = document.createElement("option");
+    prima.value = "";
+    prima.textContent = "Seleziona corsa";
+    select.appendChild(prima);
+
+    for (let i = 0; i < d.corse.length; i++) {
+      const opt = document.createElement("option");
+      opt.value = d.corse[i].corsa;
+      opt.textContent = d.corse[i].label;
+      select.appendChild(opt);
+    }
+  };
+
+  const script = document.createElement("script");
+  script.src = API_URL + "?azione=corse&callback=" + callbackName;
+  document.body.appendChild(script);
+}
+
 function accedi() {
   const p = document.getElementById("password").value;
 
   if (p === PASSWORD) {
     document.getElementById("login").style.display = "none";
     document.getElementById("app").style.display = "block";
+    caricaCorse();
   } else {
     document.getElementById("erroreLogin").innerHTML = "❌ PASSWORD ERRATA";
     document.getElementById("erroreLogin").style.color = "red";
@@ -228,7 +266,7 @@ function iniziaCheckin() {
   }
 
   if (corsaAttiva === "") {
-    alert("Inserisci prima la corsa");
+    alert("Seleziona prima la corsa");
     return;
   }
 
