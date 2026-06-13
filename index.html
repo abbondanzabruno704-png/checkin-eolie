@@ -3,17 +3,87 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Check-In Eolie</title>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+body{
+font-family:Arial;
+text-align:center;
+padding:20px;
+}
+
+#reader{
+max-width:500px;
+margin:auto;
+}
+
+#esito{
+font-size:40px;
+font-weight:bold;
+margin-top:20px;
+}
+</style>
+
 </head>
 
-<body style="font-family:Arial;text-align:center;padding:30px">
+<body>
 
 <h1>CHECK-IN EOLIE</h1>
 
-<button style="font-size:30px;padding:20px">
-SCANNER TEST
-</button>
+<div id="reader"></div>
 
-<p>GitHub Pages attivo</p>
+<div id="esito">PRONTO</div>
+
+<script>
+
+const API_URL =
+"https://script.google.com/macros/s/AKfycbzSa99xg_10X9ya-ArSujIRyfZ2yJiU52a9kOWpayixU3Nc0Im3ij1lR2yHXYTxo_g5GA/exec";
+
+function verifica(codice){
+
+fetch(API_URL + "?codice=" + encodeURIComponent(codice))
+.then(r=>r.json())
+.then(d=>{
+
+if(d.esito==="VALIDO"){
+document.body.style.background="#00c853";
+document.getElementById("esito").innerHTML="✅ IMBARCO OK";
+return;
+}
+
+if(d.esito==="ANNULLATO"){
+document.body.style.background="#ff1744";
+document.getElementById("esito").innerHTML="❌ ANNULLATO";
+return;
+}
+
+if(d.esito==="GIA_USATO"){
+document.body.style.background="#ffd600";
+document.getElementById("esito").innerHTML="⚠️ GIÀ UTILIZZATO";
+return;
+}
+
+document.body.style.background="#ff1744";
+document.getElementById("esito").innerHTML="❌ NON TROVATO";
+
+});
+
+}
+
+const scanner = new Html5QrcodeScanner(
+"reader",
+{
+fps:10,
+qrbox:250
+}
+);
+
+scanner.render(function(decodedText){
+verifica(decodedText);
+});
+
+</script>
 
 </body>
 </html>
