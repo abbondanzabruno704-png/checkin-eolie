@@ -32,15 +32,8 @@ h1{ font-size:42px; }
   line-height:1.4;
 }
 
-.nomeGrande{
-  font-size:42px;
-  font-weight:bold;
-}
-
-.info{
-  font-size:26px;
-  font-weight:normal;
-}
+.nomeGrande{ font-size:42px; font-weight:bold; }
+.info{ font-size:26px; font-weight:normal; }
 
 input, button{
   font-size:24px;
@@ -60,9 +53,7 @@ input, button{
   display:none;
 }
 
-#app{
-  display:none;
-}
+#app{ display:none; }
 </style>
 </head>
 
@@ -88,15 +79,16 @@ input, button{
 </div>
 
 <input id="operatore" placeholder="Nome operatore">
-
 <input id="corsa" placeholder="Scrivi corsa es: SAL-PAN-STR-16">
 
-<button onclick="iniziaCheckin()" id="startBtn">
-INIZIA CHECK-IN
-</button>
+<button onclick="iniziaCheckin()" id="startBtn">INIZIA CHECK-IN</button>
 
 <button onclick="mostraReport()" id="reportBtn" style="display:none;">
 📄 REPORT FINE CORSA
+</button>
+
+<button onclick="terminaCorsa()" id="chiudiBtn" style="display:none;background:#333;color:white;">
+🛑 TERMINA CORSA
 </button>
 
 <div id="reader" style="display:none;"></div>
@@ -113,11 +105,13 @@ const API_URL = "https://script.google.com/macros/s/AKfycbyMqWkwY5AwMRV46eHsKdpp
 
 let scanner;
 let bloccato = false;
+let corsaChiusa = false;
 let audioCtx = null;
 let corsaAttiva = "";
 let operatoreAttivo = "";
 let ultimoReport = null;
 let timerStats = null;
+let timerRiavvio = null;
 
 function accedi() {
   const p = document.getElementById("password").value;
@@ -179,6 +173,7 @@ function iniziaCheckin() {
   document.getElementById("corsa").style.display = "none";
   document.getElementById("startBtn").style.display = "none";
   document.getElementById("reportBtn").style.display = "inline-block";
+  document.getElementById("chiudiBtn").style.display = "inline-block";
   document.getElementById("reader").style.display = "block";
 
   aggiornaStatistiche();
@@ -230,34 +225,75 @@ function aggiornaStatistiche() {
   document.body.appendChild(script);
 }
 
+function creaTestoReport() {
+  if (!ultimoReport) {
+    return "Statistiche non disponibili";
+  }
+
+  let testo =
+    "🚢 REPORT FINE CORSA\n\n" +
+    "Corsa: " + ultimoReport.corsa + "\n\n" +
+    "Totale Passeggeri: " + ultimoReport.totale + "\n" +
+    "Imbarcati: " + ultimoReport.imbarcati + "\n" +
+    "Mancanti: " + ultimoReport.mancanti + "\n" +
+    "Annullati: " + ultimoReport.annullati + "\n\n";
+
+  testo += "Operatori:\n";
+
+  for (const op in ultimoReport.operatori) {
+    testo += op + ": " + ultimoReport.operatori[op] + " pax\n";
+  }
+
+  return testo;
+}
+
 function mostraReport() {
   aggiornaStatistiche();
 
   setTimeout(function() {
-    if (!ultimoReport) {
-      alert("Statistiche non disponibili");
-      return;
-    }
-
-    let testo =
-      "🚢 REPORT FINE CORSA\n\n" +
-      "Corsa: " + ultimoReport.corsa + "\n\n" +
-      "Totale Passeggeri: " + ultimoReport.totale + "\n" +
-      "Imbarcati: " + ultimoReport.imbarcati + "\n" +
-      "Mancanti: " + ultimoReport.mancanti + "\n" +
-      "Annullati: " + ultimoReport.annullati + "\n\n";
-
-    testo += "Operatori:\n";
-
-    for (const op in ultimoReport.operatori) {
-      testo += op + ": " + ultimoReport.operatori[op] + " pax\n";
-    }
-
-    alert(testo);
+    alert(creaTestoReport());
   }, 500);
 }
 
+function terminaCorsa() {
+  if (!confirm("Terminare la corsa " + corsaAttiva + " ?")) {
+    return;
+  }
+
+  corsaChiusa = true;
+  bloccato = true;
+
+  if (timerRiavvio) clearTimeout(timerRiavvio);
+  if (timerStats) clearInterval(timerStats);
+
+  aggiornaStatistiche();
+
+  setTimeout(function() {
+    alert(creaTestoReport());
+
+    if (scanner) {
+      scanner.clear();
+    }
+
+    document.getElementById("reader").innerHTML = "";
+    document.getElementById("reader").style.display = "none";
+    document.getElementById("reportBtn").style.display = "none";
+    document.getElementById("chiudiBtn").style.display = "none";
+
+    document.body.style.background = "#e0e0e0";
+
+    document.getElementById("esito").innerHTML = "🛑 CORSA CHIUSA";
+    document.getElementById("dettagli").innerHTML =
+      corsaAttiva + "<br><br>" +
+      "Imbarcati: " + (ultimoReport ? ultimoReport.imbarcati : "") + "<br>" +
+      "Mancanti: " + (ultimoReport ? ultimoReport.mancanti : "") + "<br>" +
+      "Annullati: " + (ultimoReport ? ultimoReport.annullati : "");
+  }, 700);
+}
+
 function verifica(codice) {
+  if (corsaChiusa) return;
+
   preparaAudio();
 
   if (bloccato) return;
@@ -339,6 +375,8 @@ function verifica(codice) {
 }
 
 function avviaScanner() {
+  if (corsaChiusa) return;
+
   document.body.style.background = "white";
 
   document.getElementById("esito").innerHTML =
@@ -359,7 +397,9 @@ function avviaScanner() {
 }
 
 function riavviaAutomatico() {
-  setTimeout(function() {
+  if (corsaChiusa) return;
+
+  timerRiavvio = setTimeout(function() {
     aggiornaStatistiche();
     avviaScanner();
   }, 2000);
