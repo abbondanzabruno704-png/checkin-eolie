@@ -50,6 +50,15 @@ input, button{
   border:1px solid #aaa;
   margin:8px;
 }
+
+#statsBox{
+  background:#f5f5f5;
+  padding:15px;
+  border-radius:12px;
+  margin-bottom:15px;
+  font-size:20px;
+  display:none;
+}
 </style>
 </head>
 
@@ -57,12 +66,24 @@ input, button{
 
 <h1>CHECK-IN EOLIE</h1>
 
+<div id="statsBox">
+  <b>📊 STATISTICHE LIVE</b><br>
+  Totale: <span id="totale">0</span> |
+  Imbarcati: <span id="imbarcati">0</span> |
+  Mancanti: <span id="mancanti">0</span> |
+  Annullati: <span id="annullati">0</span>
+</div>
+
 <input id="operatore" placeholder="Nome operatore">
 
 <input id="corsa" placeholder="Scrivi corsa es: SAL-PAN-STR-16">
 
 <button onclick="iniziaCheckin()" id="startBtn">
 INIZIA CHECK-IN
+</button>
+
+<button onclick="mostraReport()" id="reportBtn" style="display:none;">
+📄 REPORT FINE CORSA
 </button>
 
 <div id="reader" style="display:none;"></div>
@@ -78,6 +99,8 @@ let bloccato = false;
 let audioCtx = null;
 let corsaAttiva = "";
 let operatoreAttivo = "";
+let ultimoReport = null;
+let timerStats = null;
 
 function preparaAudio() {
   if (!audioCtx) {
@@ -126,7 +149,16 @@ function iniziaCheckin() {
   document.getElementById("operatore").style.display = "none";
   document.getElementById("corsa").style.display = "none";
   document.getElementById("startBtn").style.display = "none";
+  document.getElementById("reportBtn").style.display = "inline-block";
   document.getElementById("reader").style.display = "block";
+
+  aggiornaStatistiche();
+
+  if (timerStats) clearInterval(timerStats);
+
+  timerStats = setInterval(function(){
+    aggiornaStatistiche();
+  }, 10000);
 
   avviaScanner();
 }
@@ -137,6 +169,63 @@ function mostra(testo, colore, dettagli = "") {
   document.getElementById("dettagli").innerHTML = dettagli;
 
   riavviaAutomatico();
+}
+
+function aggiornaStatistiche() {
+  if (corsaAttiva === "") return;
+
+  const callbackName = "stats_" + Date.now();
+
+  window[callbackName] = function(d) {
+    delete window[callbackName];
+
+    if (d.esito !== "STATS") return;
+
+    ultimoReport = d;
+
+    document.getElementById("statsBox").style.display = "block";
+    document.getElementById("totale").innerHTML = d.totale;
+    document.getElementById("imbarcati").innerHTML = d.imbarcati;
+    document.getElementById("mancanti").innerHTML = d.mancanti;
+    document.getElementById("annullati").innerHTML = d.annullati;
+  };
+
+  const script = document.createElement("script");
+
+  script.src =
+    API_URL +
+    "?azione=stats" +
+    "&corsa=" + encodeURIComponent(corsaAttiva) +
+    "&callback=" + callbackName;
+
+  document.body.appendChild(script);
+}
+
+function mostraReport() {
+  aggiornaStatistiche();
+
+  setTimeout(function() {
+    if (!ultimoReport) {
+      alert("Statistiche non disponibili");
+      return;
+    }
+
+    let testo =
+      "🚢 REPORT FINE CORSA\n\n" +
+      "Corsa: " + ultimoReport.corsa + "\n\n" +
+      "Totale Passeggeri: " + ultimoReport.totale + "\n" +
+      "Imbarcati: " + ultimoReport.imbarcati + "\n" +
+      "Mancanti: " + ultimoReport.mancanti + "\n" +
+      "Annullati: " + ultimoReport.annullati + "\n\n";
+
+    testo += "Operatori:\n";
+
+    for (const op in ultimoReport.operatori) {
+      testo += op + ": " + ultimoReport.operatori[op] + " pax\n";
+    }
+
+    alert(testo);
+  }, 500);
 }
 
 function verifica(codice) {
@@ -158,10 +247,13 @@ function verifica(codice) {
 
     if (d.esito === "VALIDO") {
       beepValido();
+      aggiornaStatistiche();
+
       mostra(
         "✅ IMBARCO OK",
         "#00c853",
         "<span class='nomeGrande'>" + (d.nome || "") + " " + (d.cognome || "") + "</span><br>" +
+        "<span class='info'>Pax: " + (d.pax || "") + "</span><br>" +
         "<span class='info'>Ticket: " + (d.ticket || "") + "</span><br>" +
         "<span class='info'>Corsa: " + (d.corsa || "") + "</span><br>" +
         "<span class='info'>Operatore: " + operatoreAttivo + "</span>"
@@ -219,6 +311,7 @@ function verifica(codice) {
 
 function avviaScanner() {
   document.body.style.background = "white";
+
   document.getElementById("esito").innerHTML =
     "SCANNER ATTIVO<br><small>" + corsaAttiva + "</small><br><small>Operatore: " + operatoreAttivo + "</small>";
 
@@ -238,11 +331,11 @@ function avviaScanner() {
 
 function riavviaAutomatico() {
   setTimeout(function() {
+    aggiornaStatistiche();
     avviaScanner();
   }, 2000);
 }
 </script>
 
 </body>
-</html>
 </html>
