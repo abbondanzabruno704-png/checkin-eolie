@@ -54,6 +54,34 @@ input, button{
 }
 
 #app{ display:none; }
+
+#manualBox{
+  display:none;
+  background:#f0f0f0;
+  padding:12px;
+  border-radius:12px;
+  margin-bottom:12px;
+}
+
+#listaBox{
+  display:none;
+  background:white;
+  border:2px solid #333;
+  border-radius:12px;
+  padding:15px;
+  margin-top:15px;
+  text-align:left;
+  font-size:22px;
+}
+
+#listaBox h2{
+  text-align:center;
+}
+
+.rigaLista{
+  padding:8px;
+  border-bottom:1px solid #ddd;
+}
 </style>
 </head>
 
@@ -83,6 +111,19 @@ input, button{
 
 <button onclick="iniziaCheckin()" id="startBtn">INIZIA CHECK-IN</button>
 
+<div id="manualBox">
+  <input id="codiceManuale" placeholder="Inserisci ticket manualmente">
+  <button onclick="verificaManuale()">VERIFICA MANUALE</button>
+</div>
+
+<button onclick="mostraLista('imbarcati')" id="listaImbarcatiBtn" style="display:none;">
+✅ LISTA IMBARCATI
+</button>
+
+<button onclick="mostraLista('mancanti')" id="listaMancantiBtn" style="display:none;">
+⏳ LISTA MANCANTI
+</button>
+
 <button onclick="mostraReport()" id="reportBtn" style="display:none;">
 📄 REPORT FINE CORSA
 </button>
@@ -95,6 +136,8 @@ input, button{
 
 <h1 id="esito">INSERISCI OPERATORE E CORSA</h1>
 <p id="dettagli"></p>
+
+<div id="listaBox"></div>
 
 </div>
 
@@ -172,6 +215,10 @@ function iniziaCheckin() {
   document.getElementById("operatore").style.display = "none";
   document.getElementById("corsa").style.display = "none";
   document.getElementById("startBtn").style.display = "none";
+
+  document.getElementById("manualBox").style.display = "block";
+  document.getElementById("listaImbarcatiBtn").style.display = "inline-block";
+  document.getElementById("listaMancantiBtn").style.display = "inline-block";
   document.getElementById("reportBtn").style.display = "inline-block";
   document.getElementById("chiudiBtn").style.display = "inline-block";
   document.getElementById("reader").style.display = "block";
@@ -191,6 +238,8 @@ function mostra(testo, colore, dettagli = "") {
   document.body.style.background = colore;
   document.getElementById("esito").innerHTML = testo;
   document.getElementById("dettagli").innerHTML = dettagli;
+
+  document.getElementById("listaBox").style.display = "none";
 
   riavviaAutomatico();
 }
@@ -255,6 +304,72 @@ function mostraReport() {
   }, 500);
 }
 
+function verificaManuale() {
+  if (corsaChiusa) return;
+
+  const codice = document.getElementById("codiceManuale").value.trim();
+
+  if (codice === "") {
+    alert("Inserisci un codice ticket");
+    return;
+  }
+
+  document.getElementById("codiceManuale").value = "";
+  verifica(codice);
+}
+
+function mostraLista(tipo) {
+  if (corsaAttiva === "") {
+    alert("Corsa non selezionata");
+    return;
+  }
+
+  const callbackName = "lista_" + Date.now();
+
+  window[callbackName] = function(d) {
+    delete window[callbackName];
+
+    if (d.esito !== "LISTA") {
+      alert("Lista non disponibile");
+      return;
+    }
+
+    let titolo = tipo === "imbarcati" ? "✅ LISTA IMBARCATI" : "⏳ LISTA MANCANTI";
+
+    let html = "<h2>" + titolo + "</h2>";
+    html += "<p style='text-align:center'><b>Corsa:</b> " + corsaAttiva + "</p>";
+
+    if (!d.lista || d.lista.length === 0) {
+      html += "<p style='text-align:center'>Nessun passeggero presente.</p>";
+    } else {
+      for (let i = 0; i < d.lista.length; i++) {
+        const r = d.lista[i];
+
+        html +=
+          "<div class='rigaLista'>" +
+          (r.nome || "") + " " + (r.cognome || "") +
+          " - " + (r.pax || 0) + " pax" +
+          " - Ticket " + (r.ticket || "") +
+          "</div>";
+      }
+    }
+
+    document.getElementById("listaBox").innerHTML = html;
+    document.getElementById("listaBox").style.display = "block";
+  };
+
+  const script = document.createElement("script");
+
+  script.src =
+    API_URL +
+    "?azione=lista" +
+    "&tipo=" + encodeURIComponent(tipo) +
+    "&corsa=" + encodeURIComponent(corsaAttiva) +
+    "&callback=" + callbackName;
+
+  document.body.appendChild(script);
+}
+
 function terminaCorsa() {
   if (!confirm("Terminare la corsa " + corsaAttiva + " ?")) {
     return;
@@ -277,8 +392,12 @@ function terminaCorsa() {
 
     document.getElementById("reader").innerHTML = "";
     document.getElementById("reader").style.display = "none";
+    document.getElementById("manualBox").style.display = "none";
+    document.getElementById("listaImbarcatiBtn").style.display = "none";
+    document.getElementById("listaMancantiBtn").style.display = "none";
     document.getElementById("reportBtn").style.display = "none";
     document.getElementById("chiudiBtn").style.display = "none";
+    document.getElementById("listaBox").style.display = "none";
 
     document.body.style.background = "#e0e0e0";
 
@@ -302,6 +421,7 @@ function verifica(codice) {
   document.body.style.background = "white";
   document.getElementById("esito").innerHTML = "CONTROLLO...";
   document.getElementById("dettagli").innerHTML = codice;
+  document.getElementById("listaBox").style.display = "none";
 
   if (scanner) scanner.clear();
 
