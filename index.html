@@ -13,9 +13,7 @@ body{
   background:white;
 }
 
-h1{
-  font-size:42px;
-}
+h1{ font-size:42px; }
 
 #reader{
   max-width:500px;
@@ -28,16 +26,15 @@ h1{
   margin-top:20px;
 }
 
-#dettagli{
-  font-size:24px;
-}
+#dettagli{ font-size:24px; }
 
-button{
-  font-size:28px;
-  padding:18px;
+input, button{
+  font-size:24px;
+  padding:15px;
   width:90%;
   border-radius:12px;
   border:1px solid #aaa;
+  margin:8px;
 }
 </style>
 </head>
@@ -46,14 +43,16 @@ button{
 
 <h1>CHECK-IN EOLIE</h1>
 
-<div id="reader"></div>
+<input id="corsa" placeholder="Scrivi corsa es: SAL-PAN-STR-16">
 
-<h1 id="esito">SCANNER ATTIVO</h1>
-<p id="dettagli"></p>
-
-<button onclick="riavvia()" id="btn" style="display:none;">
-SCANSIONA ANCORA
+<button onclick="iniziaCheckin()" id="startBtn">
+INIZIA CHECK-IN
 </button>
+
+<div id="reader" style="display:none;"></div>
+
+<h1 id="esito">INSERISCI CORSA</h1>
+<p id="dettagli"></p>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbyMqWkwY5AwMRV46eHsKdppn9xF8goSAZDhWJHiYlpQnVnZJ6m9oIVSdIIasryOtH6T5w/exec";
@@ -61,52 +60,57 @@ const API_URL = "https://script.google.com/macros/s/AKfycbyMqWkwY5AwMRV46eHsKdpp
 let scanner;
 let bloccato = false;
 let audioCtx = null;
+let corsaAttiva = "";
 
 function preparaAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
-  if (audioCtx.state === "suspended") {
-    audioCtx.resume();
-  }
+  if (audioCtx.state === "suspended") audioCtx.resume();
 }
 
 function beep(freq, durata) {
   preparaAudio();
-
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
-
   osc.connect(gain);
   gain.connect(audioCtx.destination);
-
   osc.frequency.value = freq;
   gain.gain.value = 0.25;
-
   osc.start();
   osc.stop(audioCtx.currentTime + durata / 1000);
 }
 
-function beepValido() {
-  beep(1200, 150);
+function beepValido(){ beep(1200,150); }
+
+function beepGiaUsato(){
+  beep(1000,120);
+  setTimeout(function(){ beep(1000,120); },220);
 }
 
-function beepGiaUsato() {
-  beep(1000, 120);
-  setTimeout(function() {
-    beep(1000, 120);
-  }, 220);
-}
+function beepErrore(){ beep(400,700); }
 
-function beepErrore() {
-  beep(400, 700);
+function iniziaCheckin() {
+  corsaAttiva = document.getElementById("corsa").value.trim();
+
+  if (corsaAttiva === "") {
+    alert("Inserisci prima la corsa");
+    return;
+  }
+
+  preparaAudio();
+
+  document.getElementById("corsa").style.display = "none";
+  document.getElementById("startBtn").style.display = "none";
+  document.getElementById("reader").style.display = "block";
+
+  avviaScanner();
 }
 
 function mostra(testo, colore, dettagli = "") {
   document.body.style.background = colore;
   document.getElementById("esito").innerHTML = testo;
   document.getElementById("dettagli").innerHTML = dettagli;
-  document.getElementById("btn").style.display = "none";
 
   riavviaAutomatico();
 }
@@ -121,14 +125,11 @@ function verifica(codice) {
   document.getElementById("esito").innerHTML = "CONTROLLO...";
   document.getElementById("dettagli").innerHTML = codice;
 
-  if (scanner) {
-    scanner.clear();
-  }
+  if (scanner) scanner.clear();
 
   const callbackName = "riceviRisposta_" + Date.now();
 
   window[callbackName] = function(d) {
-
     delete window[callbackName];
 
     if (d.esito === "VALIDO") {
@@ -139,6 +140,17 @@ function verifica(codice) {
         "Ticket: " + (d.ticket || "") + "<br>" +
         "Nome: " + (d.nome || "") + " " + (d.cognome || "") + "<br>" +
         "Corsa: " + (d.corsa || "")
+      );
+      return;
+    }
+
+    if (d.esito === "ALTRA_CORSA") {
+      beepErrore();
+      mostra(
+        "❌ ALTRA CORSA",
+        "#ff1744",
+        "Corsa biglietto: " + (d.corsa || "") + "<br>" +
+        "Corsa selezionata: " + corsaAttiva
       );
       return;
     }
@@ -168,6 +180,7 @@ function verifica(codice) {
   const script = document.createElement("script");
   script.src = API_URL
     + "?codice=" + encodeURIComponent(codice)
+    + "&corsa=" + encodeURIComponent(corsaAttiva)
     + "&callback=" + callbackName;
 
   script.onerror = function() {
@@ -180,9 +193,8 @@ function verifica(codice) {
 
 function avviaScanner() {
   document.body.style.background = "white";
-  document.getElementById("esito").innerHTML = "SCANNER ATTIVO";
+  document.getElementById("esito").innerHTML = "SCANNER ATTIVO<br><small>" + corsaAttiva + "</small>";
   document.getElementById("dettagli").innerHTML = "";
-  document.getElementById("btn").style.display = "none";
   document.getElementById("reader").innerHTML = "";
   bloccato = false;
 
@@ -201,12 +213,6 @@ function riavviaAutomatico() {
     avviaScanner();
   }, 2000);
 }
-
-function riavvia() {
-  avviaScanner();
-}
-
-avviaScanner();
 </script>
 
 </body>
