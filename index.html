@@ -425,6 +425,234 @@ button:active{
     font-size:11px;
   }
 }
+
+
+/* ===== OTTIMIZZAZIONE IPHONE ===== */
+html{
+  min-height:100%;
+  background:#f4f8fb;
+}
+
+body{
+  min-height:100%;
+  padding-top:calc(10px + env(safe-area-inset-top));
+  padding-bottom:calc(14px + env(safe-area-inset-bottom));
+}
+
+@media(max-width:600px){
+  body{
+    padding-left:8px;
+    padding-right:8px;
+  }
+
+  .header{
+    padding:12px 10px;
+    border-radius:18px;
+    margin-bottom:8px;
+    box-shadow:0 5px 14px rgba(0,0,0,0.10);
+  }
+
+  .headerTitle{
+    font-size:25px;
+    letter-spacing:1px;
+  }
+
+  .subtitle{
+    font-size:13px;
+    margin-top:3px;
+  }
+
+  .panel{
+    padding:10px;
+    margin:8px auto;
+    border-radius:18px;
+    box-shadow:0 5px 16px rgba(0,0,0,0.10);
+  }
+
+  #login{
+    margin-top:20px;
+  }
+
+  #app{
+    max-width:100%;
+  }
+
+  h1{
+    font-size:27px;
+    margin:8px 0;
+  }
+
+  input, button, select{
+    width:100%;
+    margin:5px 0;
+    padding:12px;
+    min-height:48px;
+    font-size:17px;
+    border-radius:14px;
+  }
+
+  input, select{
+    line-height:22px;
+  }
+
+  button{
+    min-height:50px;
+  }
+
+  #reader{
+    max-width:calc(100vw - 18px);
+    margin:8px auto;
+    padding:4px;
+    border-width:3px;
+    border-radius:18px;
+  }
+
+  #reader video,
+  #reader canvas{
+    border-radius:14px!important;
+  }
+
+  #esito{
+    font-size:27px;
+    margin:8px 0 4px 0;
+    line-height:1.12;
+  }
+
+  #dettagli{
+    font-size:20px;
+    line-height:1.25;
+    margin:6px 0;
+  }
+
+  .nomeGrande{
+    font-size:29px;
+  }
+
+  .info{
+    font-size:19px;
+  }
+
+  #statsBox{
+    margin:8px auto;
+    max-width:100%;
+  }
+
+  .statsTitle{
+    font-size:15px;
+    margin-bottom:6px;
+  }
+
+  .statsGrid{
+    grid-template-columns:repeat(4,1fr);
+    gap:5px;
+  }
+
+  .statCard{
+    border-radius:13px;
+    padding:7px 3px;
+    min-height:58px;
+  }
+
+  .statNumber{
+    font-size:22px;
+  }
+
+  .statLabel{
+    font-size:10px;
+    margin-top:1px;
+  }
+
+  #manualBox,
+  #menuOperazioni,
+  #listaBox,
+  #annullaBox,
+  #storicoBox,
+  #dettaglioStatsBox{
+    max-width:100%;
+    border-radius:18px;
+    padding:10px;
+    margin:8px auto;
+    box-shadow:0 5px 16px rgba(0,0,0,0.10);
+  }
+
+  #menuOperazioni button{
+    margin:6px auto;
+  }
+
+  #listaBox{
+    font-size:17px;
+  }
+
+  #listaBox h2,
+  #storicoBox h2,
+  #annullaBox h2,
+  #dettaglioStatsBox h2{
+    font-size:22px;
+    margin:5px 0 10px 0;
+  }
+
+  .rigaLista{
+    font-size:16px;
+    padding:9px 4px;
+  }
+
+  #annullaBox{
+    font-size:18px;
+  }
+
+  #annullaDettagli{
+    font-size:20px;
+  }
+
+  .storicoCard{
+    padding:10px;
+    margin:8px 0;
+    border-radius:14px;
+  }
+
+  .storicoTitolo{
+    font-size:18px;
+  }
+
+  .storicoDettagli{
+    font-size:15px;
+  }
+
+  .dettaglioRiga{
+    padding:11px;
+    font-size:21px;
+    border-radius:14px;
+  }
+
+  .dettaglioRiga span{
+    font-size:14px;
+  }
+}
+
+@media(max-width:360px){
+  .headerTitle{
+    font-size:22px;
+  }
+
+  input, button, select{
+    font-size:16px;
+    padding:10px;
+    min-height:45px;
+  }
+
+  #esito{
+    font-size:24px;
+  }
+
+  .statNumber{
+    font-size:20px;
+  }
+
+  .statLabel{
+    font-size:9px;
+  }
+}
+
 </style>
 </head>
 
@@ -473,10 +701,6 @@ button:active{
   <input id="operatore" placeholder="Nome operatore">
   <select id="corsa">
     <option value="">Caricamento corse...</option>
-  </select>
-
-  <select id="portoCheckin">
-    <option value="">Seleziona porto check-in</option>
   </select>
 
   <button onclick="iniziaCheckin()" id="startBtn">INIZIA CHECK-IN</button>
@@ -575,7 +799,6 @@ let corsaChiusa = false;
 let audioCtx = null;
 let corsaAttiva = "";
 let operatoreAttivo = "";
-let portoCheckinAttivo = "";
 let ultimoReport = null;
 let timerStats = null;
 let timerRiavvio = null;
@@ -598,11 +821,7 @@ function caricaCorse() {
     delete window[callbackName];
 
     const select = document.getElementById("corsa");
-    const selectPorto = document.getElementById("portoCheckin");
     select.innerHTML = "";
-    if (selectPorto) {
-      selectPorto.innerHTML = "<option value=''>Seleziona prima la corsa</option>";
-    }
 
     if (!d || d.esito !== "CORSE" || !d.corse || d.corse.length === 0) {
       const opt = document.createElement("option");
@@ -629,46 +848,6 @@ function caricaCorse() {
   script.src = API_URL + "?azione=corse&callback=" + callbackName;
   document.body.appendChild(script);
 }
-
-function caricaPortiCheckin() {
-  const selectPorto = document.getElementById("portoCheckin");
-  const corsa = document.getElementById("corsa").value.trim();
-
-  if (!selectPorto) return;
-
-  selectPorto.innerHTML = "<option value=''>Caricamento porti...</option>";
-
-  if (corsa === "") {
-    selectPorto.innerHTML = "<option value=''>Seleziona prima la corsa</option>";
-    return;
-  }
-
-  chiamaApi({ azione: "portiCheckin", corsa: corsa }, function(d) {
-    selectPorto.innerHTML = "";
-
-    const prima = document.createElement("option");
-    prima.value = "";
-    prima.textContent = "Seleziona porto check-in";
-    selectPorto.appendChild(prima);
-
-    if (!d || d.esito !== "PORTI" || !d.porti || d.porti.length === 0) {
-      const opt = document.createElement("option");
-      opt.value = "";
-      opt.textContent = "Nessun porto trovato";
-      selectPorto.appendChild(opt);
-      return;
-    }
-
-    for (let i = 0; i < d.porti.length; i++) {
-      const opt = document.createElement("option");
-      opt.value = d.porti[i];
-      opt.textContent = d.porti[i];
-      selectPorto.appendChild(opt);
-    }
-  });
-}
-
-document.getElementById("corsa").addEventListener("change", caricaPortiCheckin);
 
 function accedi() {
   const p = document.getElementById("password").value;
@@ -714,7 +893,6 @@ function beepErrore(){ beep(400,700); }
 function iniziaCheckin() {
   operatoreAttivo = document.getElementById("operatore").value.trim();
   corsaAttiva = document.getElementById("corsa").value.trim();
-  portoCheckinAttivo = document.getElementById("portoCheckin").value.trim();
 
   if (operatoreAttivo === "") {
     alert("Inserisci il nome operatore");
@@ -726,16 +904,10 @@ function iniziaCheckin() {
     return;
   }
 
-  if (portoCheckinAttivo === "") {
-    alert("Seleziona il porto di check-in");
-    return;
-  }
-
   preparaAudio();
 
   document.getElementById("operatore").style.display = "none";
   document.getElementById("corsa").style.display = "none";
-  document.getElementById("portoCheckin").style.display = "none";
   document.getElementById("startBtn").style.display = "none";
   document.getElementById("setupBox").style.display = "none";
 
@@ -1273,8 +1445,7 @@ function caricaStorico() {
           "<b>Adulti:</b> " + (r.adultiTotale || 0) +
           " &nbsp; <b>Bambini:</b> " + (r.bambiniTotale || 0) +
           " &nbsp; <b>Infant:</b> " + (r.infantTotale || 0) + "<br>" +
-          "<b>Operatore:</b> " + (r.operatore || "-") + "<br>" +
-          "<b>Porto check-in:</b> " + (r.portoCheckin || "-") +
+          "<b>Operatore:</b> " + (r.operatore || "-") +
           "</div>" +
           "<button onclick=\"eliminaStorico(" + r.riga + ")\">🗑️ CANCELLA DALLO STORICO</button>" +
           "</div>";
@@ -1306,7 +1477,6 @@ function chiudiStorico() {
   document.getElementById("setupBox").style.display = "block";
   document.getElementById("operatore").style.display = "block";
   document.getElementById("corsa").style.display = "block";
-  document.getElementById("portoCheckin").style.display = "block";
   document.getElementById("startBtn").style.display = "inline-block";
   document.getElementById("storicoBtn").style.display = "inline-block";
 
@@ -1336,7 +1506,6 @@ function salvaStoricoCorsa(callback) {
     + "?azione=salvaStorico"
     + "&corsa=" + encodeURIComponent(corsaAttiva)
     + "&operatore=" + encodeURIComponent(operatoreAttivo)
-    + "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo)
     + "&callback=" + callbackName;
 
   document.body.appendChild(script);
@@ -1414,8 +1583,8 @@ function nuovaCorsa() {
 
   document.getElementById("operatore").style.display = "block";
   document.getElementById("corsa").style.display = "block";
-  document.getElementById("portoCheckin").style.display = "block";
-  document.getElementById("startBtn").style.display = "inline-block";  document.getElementById("storicoBtn").style.display = "inline-block";
+  document.getElementById("startBtn").style.display = "inline-block";
+  document.getElementById("storicoBtn").style.display = "inline-block";
   document.getElementById("setupBox").style.display = "block";
 
   document.getElementById("manualBox").style.display = "none";
@@ -1435,8 +1604,6 @@ function nuovaCorsa() {
   document.getElementById("codiceManuale").value = "";
   document.getElementById("operatore").value = "";
   document.getElementById("corsa").value = "";
-  document.getElementById("portoCheckin").innerHTML = "<option value=''>Seleziona prima la corsa</option>";
-  portoCheckinAttivo = "";
 
   document.getElementById("esito").innerHTML =
     "INSERISCI OPERATORE E CORSA";
@@ -1526,7 +1693,6 @@ function verifica(codice) {
     + "?codice=" + encodeURIComponent(codice)
     + "&corsa=" + encodeURIComponent(corsaAttiva)
     + "&operatore=" + encodeURIComponent(operatoreAttivo)
-    + "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo)
     + "&callback=" + callbackName;
 
   script.onerror = function() {
@@ -1543,7 +1709,7 @@ function avviaScanner() {
   document.body.style.background = "white";
 
   document.getElementById("esito").innerHTML =
-    "SCANNER ATTIVO<br><small>" + corsaAttiva + "</small><br><small>Porto check-in: " + portoCheckinAttivo + "</small><br><small>Operatore: " + operatoreAttivo + "</small>";
+    "SCANNER ATTIVO<br><small>" + corsaAttiva + "</small><br><small>Operatore: " + operatoreAttivo + "</small>";
 
   document.getElementById("dettagli").innerHTML = "";
   document.getElementById("reader").innerHTML = "";
