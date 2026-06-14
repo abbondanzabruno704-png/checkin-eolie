@@ -86,6 +86,22 @@ input, button, select{
   padding:8px;
   border-bottom:1px solid #ddd;
 }
+
+#annullaBox{
+  display:none;
+  background:#fff8e1;
+  border:2px solid #ff9800;
+  border-radius:12px;
+  padding:15px;
+  margin-top:15px;
+  font-size:22px;
+}
+
+#annullaDettagli{
+  font-size:26px;
+  font-weight:bold;
+  line-height:1.4;
+}
 </style>
 </head>
 
@@ -140,6 +156,10 @@ input, button, select{
 ⏳ LISTA MANCANTI
 </button>
 
+<button onclick="apriAnnullaCheckin()">
+↩️ ANNULLA CHECK-IN
+</button>
+
 <button onclick="terminaCorsa()" style="background:#333;color:white;">
 🛑 TERMINA CORSA
 </button>
@@ -152,6 +172,19 @@ input, button, select{
 <p id="dettagli"></p>
 
 <div id="listaBox"></div>
+
+<div id="annullaBox">
+  <h2>↩️ ANNULLA CHECK-IN</h2>
+  <input id="ticketAnnulla" placeholder="Inserisci numero ticket">
+  <button onclick="cercaTicketAnnulla()">CERCA TICKET</button>
+  <div id="annullaDettagli"></div>
+  <button id="confermaAnnullaBtn"
+          onclick="confermaAnnullaCheckin()"
+          style="display:none;background:#ff9800;color:white;">
+  CONFERMA ANNULLAMENTO
+  </button>
+  <button onclick="chiudiAnnullaBox()">INDIETRO</button>
+</div>
 
 <button id="nuovaCorsaBtn"
         onclick="nuovaCorsa()"
@@ -175,6 +208,7 @@ let operatoreAttivo = "";
 let ultimoReport = null;
 let timerStats = null;
 let timerRiavvio = null;
+let ticketDaAnnullare = "";
 
 function toggleMenu() {
   const menu = document.getElementById("menuOperazioni");
@@ -303,6 +337,7 @@ function mostra(testo, colore, dettagli = "") {
   document.getElementById("dettagli").innerHTML = dettagli;
 
   document.getElementById("listaBox").style.display = "none";
+  document.getElementById("annullaBox").style.display = "none";
 
   riavviaAutomatico();
 }
@@ -433,6 +468,158 @@ function mostraLista(tipo) {
   document.body.appendChild(script);
 }
 
+
+function apriAnnullaCheckin() {
+  if (corsaChiusa) return;
+
+  if (scanner) {
+    scanner.clear();
+  }
+
+  bloccato = true;
+  ticketDaAnnullare = "";
+
+  document.body.style.background = "white";
+  document.getElementById("menuOperazioni").style.display = "none";
+  document.getElementById("listaBox").style.display = "none";
+  document.getElementById("reader").innerHTML = "";
+  document.getElementById("annullaBox").style.display = "block";
+  document.getElementById("ticketAnnulla").value = "";
+  document.getElementById("annullaDettagli").innerHTML = "";
+  document.getElementById("confermaAnnullaBtn").style.display = "none";
+
+  document.getElementById("esito").innerHTML = "↩️ ANNULLA CHECK-IN";
+  document.getElementById("dettagli").innerHTML =
+    "Inserisci il numero ticket da riportare nei mancanti";
+}
+
+function chiudiAnnullaBox() {
+  ticketDaAnnullare = "";
+
+  document.getElementById("annullaBox").style.display = "none";
+  document.getElementById("annullaDettagli").innerHTML = "";
+  document.getElementById("confermaAnnullaBtn").style.display = "none";
+
+  avviaScanner();
+}
+
+function cercaTicketAnnulla() {
+  const ticket = document.getElementById("ticketAnnulla").value.trim();
+
+  if (ticket === "") {
+    alert("Inserisci il numero ticket");
+    return;
+  }
+
+  const callbackName = "trova_" + Date.now();
+
+  window[callbackName] = function(d) {
+    delete window[callbackName];
+
+    if (d.esito === "TROVATO") {
+      ticketDaAnnullare = d.ticket;
+
+      document.getElementById("annullaDettagli").innerHTML =
+        "⚠️ CONFERMA ANNULLAMENTO<br><br>" +
+        "<span class='nomeGrande'>" + (d.nome || "") + " " + (d.cognome || "") + "</span><br>" +
+        "<span class='info'>Passeggeri: " + (d.pax || "") + "</span><br>" +
+        "<span class='info'>Ticket: " + (d.ticket || "") + "</span><br>" +
+        "<span class='info'>Corsa: " + (d.corsa || "") + "</span>";
+
+      document.getElementById("confermaAnnullaBtn").style.display = "inline-block";
+      return;
+    }
+
+    ticketDaAnnullare = "";
+    document.getElementById("confermaAnnullaBtn").style.display = "none";
+
+    if (d.esito === "NON_IMBARCATO") {
+      document.getElementById("annullaDettagli").innerHTML =
+        "❌ TICKET NON RISULTA IMBARCATO<br><br>" +
+        (d.nome || "") + " " + (d.cognome || "") + "<br>" +
+        "Pax: " + (d.pax || "") + "<br>" +
+        "Ticket: " + (d.ticket || "");
+      return;
+    }
+
+    if (d.esito === "ALTRA_CORSA") {
+      document.getElementById("annullaDettagli").innerHTML =
+        "❌ TICKET DI ALTRA CORSA<br><br>" +
+        "Corsa biglietto: " + (d.corsa || "") + "<br>" +
+        "Corsa selezionata: " + corsaAttiva;
+      return;
+    }
+
+    if (d.esito === "ANNULLATO") {
+      document.getElementById("annullaDettagli").innerHTML =
+        "❌ BIGLIETTO ANNULLATO";
+      return;
+    }
+
+    document.getElementById("annullaDettagli").innerHTML =
+      "❌ TICKET NON TROVATO";
+  };
+
+  const script = document.createElement("script");
+  script.src = API_URL
+    + "?azione=trovaTicket"
+    + "&ticket=" + encodeURIComponent(ticket)
+    + "&corsa=" + encodeURIComponent(corsaAttiva)
+    + "&callback=" + callbackName;
+
+  document.body.appendChild(script);
+}
+
+function confermaAnnullaCheckin() {
+  if (ticketDaAnnullare === "") {
+    alert("Nessun ticket selezionato");
+    return;
+  }
+
+  if (!confirm("Confermi annullamento check-in del ticket " + ticketDaAnnullare + " ?")) {
+    return;
+  }
+
+  const callbackName = "annulla_" + Date.now();
+
+  window[callbackName] = function(d) {
+    delete window[callbackName];
+
+    if (d.esito === "CHECKIN_ANNULLATO") {
+      beepValido();
+      aggiornaStatistiche();
+
+      document.getElementById("annullaBox").style.display = "none";
+
+      mostra(
+        "✅ CHECK-IN ANNULLATO",
+        "#00c853",
+        "<span class='nomeGrande'>" + (d.nome || "") + " " + (d.cognome || "") + "</span><br>" +
+        "<span class='info'>Passeggeri: " + (d.pax || "") + "</span><br>" +
+        "<span class='info'>Ticket: " + (d.ticket || "") + "</span><br>" +
+        "<span class='info'>Corsa: " + (d.corsa || "") + "</span>"
+      );
+
+      ticketDaAnnullare = "";
+      return;
+    }
+
+    beepErrore();
+    document.getElementById("annullaDettagli").innerHTML =
+      "❌ IMPOSSIBILE ANNULLARE IL CHECK-IN";
+  };
+
+  const script = document.createElement("script");
+  script.src = API_URL
+    + "?azione=annullaCheckin"
+    + "&ticket=" + encodeURIComponent(ticketDaAnnullare)
+    + "&corsa=" + encodeURIComponent(corsaAttiva)
+    + "&callback=" + callbackName;
+
+  document.body.appendChild(script);
+}
+
+
 function terminaCorsa() {
   if (!confirm("Terminare la corsa " + corsaAttiva + " ?")) {
     return;
@@ -459,6 +646,7 @@ function terminaCorsa() {
     document.getElementById("menuBtn").style.display = "none";
     document.getElementById("menuOperazioni").style.display = "none";
     document.getElementById("listaBox").style.display = "none";
+    document.getElementById("annullaBox").style.display = "none";
     document.getElementById("nuovaCorsaBtn").style.display = "inline-block";
 
     document.body.style.background = "#e0e0e0";
@@ -494,6 +682,7 @@ function nuovaCorsa() {
   document.getElementById("reader").style.display = "none";
   document.getElementById("statsBox").style.display = "none";
   document.getElementById("listaBox").style.display = "none";
+  document.getElementById("annullaBox").style.display = "none";
   document.getElementById("nuovaCorsaBtn").style.display = "none";
 
   document.getElementById("codiceManuale").value = "";
@@ -520,6 +709,7 @@ function verifica(codice) {
   document.getElementById("esito").innerHTML = "CONTROLLO...";
   document.getElementById("dettagli").innerHTML = codice;
   document.getElementById("listaBox").style.display = "none";
+  document.getElementById("annullaBox").style.display = "none";
 
   if (scanner) scanner.clear();
 
