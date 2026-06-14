@@ -709,7 +709,6 @@ body{
 
   <button onclick="iniziaCheckin()" id="startBtn">INIZIA CHECK-IN</button>
   <button onclick="apriStorico()" id="storicoBtn" style="background:#0d47a1;color:white;">📊 STORICO CORSE</button>
-  <button onclick="apriCambioPassword()" id="passwordBtn" style="background:#6a1b9a;color:white;">🔐 CAMBIA PASSWORD</button>
 </div>
 
 <div id="manualBox">
@@ -764,16 +763,6 @@ body{
 ← TORNA A OPERATORE E CORSA
 </button>
 
-<div id="cambioPasswordBox" class="panel" style="display:none;">
-  <h2>🔐 CAMBIA PASSWORD</h2>
-  <input id="passwordAttuale" type="password" placeholder="Password attuale">
-  <input id="nuovaPassword" type="password" placeholder="Nuova password">
-  <input id="confermaPassword" type="password" placeholder="Conferma nuova password">
-  <button onclick="confermaCambioPassword()" style="background:#6a1b9a;color:white;">SALVA PASSWORD</button>
-  <button onclick="chiudiCambioPassword()" style="background:#333;color:white;">← TORNA A OPERATORE E CORSA</button>
-  <h2 id="esitoCambioPassword"></h2>
-</div>
-
 <div id="listaBox"></div>
 
 <button id="chiudiListaBtn"
@@ -804,6 +793,8 @@ body{
 </div>
 
 <script>
+const PASSWORD = "brunoabbondanza";
+
 const API_URL = "https://script.google.com/macros/s/AKfycbyMqWkwY5AwMRV46eHsKdppn9xF8goSAZDhWJHiYlpQnVnZJ6m9oIVSdIIasryOtH6T5w/exec";
 
 let scanner;
@@ -896,31 +887,16 @@ function caricaPortiCheckin() {
 }
 
 function accedi() {
-  const p = document.getElementById("password").value.trim();
+  const p = document.getElementById("password").value;
 
-  if (p === "") {
-    document.getElementById("erroreLogin").innerHTML = "Inserisci la password";
+  if (p === PASSWORD) {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    caricaCorse();
+  } else {
+    document.getElementById("erroreLogin").innerHTML = "❌ PASSWORD ERRATA";
     document.getElementById("erroreLogin").style.color = "red";
-    return;
   }
-
-  document.getElementById("erroreLogin").innerHTML = "Controllo password...";
-  document.getElementById("erroreLogin").style.color = "#333";
-
-  chiamaApi({
-    azione: "login",
-    password: p
-  }, function(d) {
-    if (d && d.esito === "LOGIN_OK") {
-      document.getElementById("login").style.display = "none";
-      document.getElementById("app").style.display = "block";
-      document.getElementById("password").value = "";
-      caricaCorse();
-    } else {
-      document.getElementById("erroreLogin").innerHTML = "❌ PASSWORD ERRATA";
-      document.getElementById("erroreLogin").style.color = "red";
-    }
-  });
 }
 
 function preparaAudio() {
@@ -1452,102 +1428,6 @@ function chiamaApi(params, callback) {
 
   script.src = API_URL + "?" + new URLSearchParams(params).toString();
   document.body.appendChild(script);
-}
-
-function apriCambioPassword() {
-  if (scanner) {
-    scanner.clear();
-  }
-
-  document.getElementById("setupBox").style.display = "none";
-  document.getElementById("statsBox").style.display = "none";
-  document.getElementById("manualBox").style.display = "none";
-  document.getElementById("menuBtn").style.display = "none";
-  document.getElementById("menuOperazioni").style.display = "none";
-  document.getElementById("reader").style.display = "none";
-  document.getElementById("storicoBox").style.display = "none";
-  document.getElementById("tornaStoricoBtn").style.display = "none";
-  document.getElementById("listaBox").style.display = "none";
-  document.getElementById("chiudiListaBtn").style.display = "none";
-  document.getElementById("annullaBox").style.display = "none";
-  document.getElementById("dettaglioStatsBox").style.display = "none";
-  document.getElementById("tornaStatsBtn").style.display = "none";
-
-  document.getElementById("esito").style.display = "none";
-  document.getElementById("dettagli").style.display = "none";
-
-  document.getElementById("passwordAttuale").value = "";
-  document.getElementById("nuovaPassword").value = "";
-  document.getElementById("confermaPassword").value = "";
-  document.getElementById("esitoCambioPassword").innerHTML = "";
-  document.getElementById("cambioPasswordBox").style.display = "block";
-}
-
-function chiudiCambioPassword() {
-  document.getElementById("cambioPasswordBox").style.display = "none";
-  document.getElementById("setupBox").style.display = "block";
-  document.getElementById("esito").style.display = "block";
-  document.getElementById("dettagli").style.display = "block";
-  document.getElementById("esito").innerHTML = "INSERISCI OPERATORE E CORSA";
-  document.getElementById("dettagli").innerHTML = "";
-}
-
-function confermaCambioPassword() {
-  const attuale = document.getElementById("passwordAttuale").value.trim();
-  const nuova = document.getElementById("nuovaPassword").value.trim();
-  const conferma = document.getElementById("confermaPassword").value.trim();
-  const esito = document.getElementById("esitoCambioPassword");
-
-  if (attuale === "" || nuova === "" || conferma === "") {
-    esito.innerHTML = "Compila tutti i campi";
-    esito.style.color = "red";
-    return;
-  }
-
-  if (nuova.length < 4) {
-    esito.innerHTML = "La nuova password deve avere almeno 4 caratteri";
-    esito.style.color = "red";
-    return;
-  }
-
-  if (nuova !== conferma) {
-    esito.innerHTML = "Le nuove password non coincidono";
-    esito.style.color = "red";
-    return;
-  }
-
-  esito.innerHTML = "Salvataggio...";
-  esito.style.color = "#333";
-
-  chiamaApi({
-    azione: "cambiaPassword",
-    passwordAttuale: attuale,
-    nuovaPassword: nuova
-  }, function(d) {
-    if (d && d.esito === "PASSWORD_CAMBIATA") {
-      esito.innerHTML = "✅ PASSWORD CAMBIATA";
-      esito.style.color = "green";
-      document.getElementById("passwordAttuale").value = "";
-      document.getElementById("nuovaPassword").value = "";
-      document.getElementById("confermaPassword").value = "";
-      return;
-    }
-
-    if (d && d.esito === "PASSWORD_ERRATA") {
-      esito.innerHTML = "❌ PASSWORD ATTUALE ERRATA";
-      esito.style.color = "red";
-      return;
-    }
-
-    if (d && d.esito === "PASSWORD_CORTA") {
-      esito.innerHTML = "❌ PASSWORD TROPPO CORTA";
-      esito.style.color = "red";
-      return;
-    }
-
-    esito.innerHTML = "❌ ERRORE CAMBIO PASSWORD";
-    esito.style.color = "red";
-  });
 }
 
 function apriStorico() {
