@@ -704,28 +704,30 @@ body.risultatoAttivo #dettagli{
 
 
 
-/* ===== FIX DEFINITIVO FASCIA GRIGIA SOPRA BODY ===== */
-html,
-body{
+
+
+/* ===== FIX FASCIA SUPERIORE SENZA TOGLIERE COLORE ESITO ===== */
+html{
   margin:0!important;
-  background:#ffffff!important;
+  padding:0!important;
+  background:#f4f8fb;
 }
 
+body{
+  margin:0!important;
+}
+
+/* elimina il bordo/fascia superiore creato dal padding extra su iPhone */
 body{
   padding-top:0!important;
 }
 
-/* Mantiene solo lo spazio sicuro reale di iPhone, senza creare banda grigia */
+/* mantiene il bordo inferiore sicuro, ma non crea fascia sopra */
 @supports (padding: max(0px)){
   body{
-    padding-top:max(0px, env(safe-area-inset-top))!important;
+    padding-top:0!important;
+    padding-bottom:max(14px, env(safe-area-inset-bottom))!important;
   }
-}
-
-/* Quando si torna allo scanner o alle schermate interne, sfondo sempre bianco */
-#app,
-#login{
-  background:#ffffff!important;
 }
 
 
@@ -1079,6 +1081,7 @@ function iniziaCheckin() {
 function mostra(testo, colore, dettagli = "") {
   document.body.classList.add("risultatoAttivo");
   document.body.style.background = colore;
+  document.documentElement.style.background = colore;
   document.getElementById("esito").innerHTML = testo;
   document.getElementById("dettagli").innerHTML = dettagli;
 
@@ -1196,6 +1199,7 @@ function mostraDettaglioStats(tipo) {
     pulsanteLista;
 
   document.body.style.background = "white";
+  document.documentElement.style.background = "white";
 
   document.getElementById("statsBox").style.display = "none";
   document.getElementById("manualBox").style.display = "none";
@@ -1233,6 +1237,7 @@ function chiudiDettaglioStats() {
     document.getElementById("menuBtn").style.display = "inline-block";
     document.getElementById("reader").style.display = "block";
     document.body.style.background = "white";
+  document.documentElement.style.background = "white";
     aggiornaStatistiche();
     avviaScanner();
   }
@@ -1325,6 +1330,7 @@ function mostraLista(tipo) {
     }
 
     document.body.style.background = "white";
+  document.documentElement.style.background = "white";
 
     document.getElementById("statsBox").style.display = "none";
     document.getElementById("dettaglioStatsBox").style.display = "none";
@@ -1370,6 +1376,7 @@ function chiudiLista() {
     document.getElementById("menuBtn").style.display = "inline-block";
     document.getElementById("reader").style.display = "block";
     document.body.style.background = "white";
+  document.documentElement.style.background = "white";
     aggiornaStatistiche();
     avviaScanner();
   }
@@ -1387,6 +1394,7 @@ function apriAnnullaCheckin() {
   ticketDaAnnullare = "";
 
   document.body.style.background = "white";
+  document.documentElement.style.background = "white";
   document.getElementById("menuOperazioni").style.display = "none";
   document.getElementById("listaBox").style.display = "none";
   document.getElementById("chiudiListaBtn").style.display = "none";
@@ -1567,6 +1575,7 @@ function apriStorico() {
   }
 
   document.body.style.background = "white";
+  document.documentElement.style.background = "white";
 
   document.getElementById("setupBox").style.display = "none";
   document.getElementById("statsBox").style.display = "none";
@@ -1664,6 +1673,7 @@ function chiudiStorico() {
   document.getElementById("dettagli").innerHTML = "";
 
   document.body.style.background = "white";
+  document.documentElement.style.background = "white";
   caricaCorse();
 }
 
@@ -1734,6 +1744,7 @@ function terminaCorsa() {
       document.getElementById("nuovaCorsaBtn").style.display = "inline-block";
 
       document.body.style.background = "#e0e0e0";
+      document.documentElement.style.background = "#e0e0e0";
 
       document.getElementById("esito").innerHTML = "🛑 CORSA CHIUSA";
       document.getElementById("dettagli").innerHTML =
@@ -1757,6 +1768,7 @@ function nuovaCorsa() {
   if (timerStats) clearInterval(timerStats);
 
   document.body.style.background = "white";
+  document.documentElement.style.background = "white";
 
   document.getElementById("esito").style.display = "block";
   document.getElementById("dettagli").style.display = "block";
@@ -1806,6 +1818,7 @@ function verifica(codice) {
   bloccato = true;
 
   document.body.style.background = "white";
+  document.documentElement.style.background = "white";
   document.getElementById("esito").innerHTML = "CONTROLLO...";
   document.getElementById("dettagli").innerHTML = codice;
   document.getElementById("listaBox").style.display = "none";
@@ -1909,6 +1922,7 @@ function avviaScanner() {
 
   document.body.classList.remove("risultatoAttivo");
   document.body.style.background = "white";
+  document.documentElement.style.background = "white";
   document.getElementById("reader").style.display = "block";
 
   document.getElementById("esito").innerHTML =
