@@ -702,6 +702,33 @@ body.risultatoAttivo #dettagli{
   }
 }
 
+
+
+/* ===== FIX DEFINITIVO FASCIA GRIGIA SOPRA BODY ===== */
+html,
+body{
+  margin:0!important;
+  background:#ffffff!important;
+}
+
+body{
+  padding-top:0!important;
+}
+
+/* Mantiene solo lo spazio sicuro reale di iPhone, senza creare banda grigia */
+@supports (padding: max(0px)){
+  body{
+    padding-top:max(0px, env(safe-area-inset-top))!important;
+  }
+}
+
+/* Quando si torna allo scanner o alle schermate interne, sfondo sempre bianco */
+#app,
+#login{
+  background:#ffffff!important;
+}
+
+
 </style>
 </head>
 
