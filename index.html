@@ -6,84 +6,248 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
-body{
-  font-family:Arial;
-  text-align:center;
-  padding:20px;
-  background:white;
+:root{
+  --navy:#073763;
+  --blue:#0d6efd;
+  --deep:#062b4f;
+  --light:#f4f8fb;
+  --card:#ffffff;
+  --green:#00c853;
+  --red:#ff1744;
+  --yellow:#ffd600;
+  --gray:#e9eef3;
 }
 
-h1{ font-size:42px; }
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  text-align:center;
+  padding:14px;
+  background:linear-gradient(180deg,#073763 0%,#0b4f86 180px,#f4f8fb 181px);
+  color:#102030;
+  touch-action:manipulation;
+}
+
+.header{
+  background:rgba(255,255,255,0.12);
+  color:white;
+  padding:18px 14px;
+  border-radius:22px;
+  margin-bottom:14px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.18);
+}
+
+.headerTitle{
+  font-size:34px;
+  font-weight:900;
+  letter-spacing:0.5px;
+}
+
+.subtitle{
+  font-size:16px;
+  opacity:0.9;
+  margin-top:5px;
+}
+
+.panel{
+  background:var(--card);
+  border-radius:22px;
+  padding:16px;
+  margin:12px auto;
+  max-width:620px;
+  box-shadow:0 8px 25px rgba(0,0,0,0.12);
+}
+
+#login{
+  max-width:520px;
+  margin:40px auto 0 auto;
+}
+
+#app{
+  display:none;
+  max-width:720px;
+  margin:0 auto;
+}
+
+h1{
+  font-size:34px;
+  margin:14px 0;
+}
 
 #reader{
-  max-width:500px;
-  margin:auto;
+  max-width:520px;
+  margin:14px auto;
+  border:4px solid var(--blue);
+  border-radius:22px;
+  overflow:hidden;
+  background:white;
+  padding:8px;
+  box-shadow:0 8px 20px rgba(13,110,253,0.20);
 }
 
 #esito{
-  font-size:44px;
-  font-weight:bold;
-  margin-top:20px;
+  font-size:38px;
+  font-weight:900;
+  margin:14px 0 8px 0;
+  line-height:1.15;
 }
 
 #dettagli{
-  font-size:30px;
+  font-size:28px;
   font-weight:bold;
-  line-height:1.4;
+  line-height:1.35;
+  margin:10px 0;
 }
 
-.nomeGrande{ font-size:42px; font-weight:bold; }
-.info{ font-size:26px; font-weight:normal; }
+.nomeGrande{
+  font-size:40px;
+  font-weight:900;
+}
+
+.info{
+  font-size:25px;
+  font-weight:normal;
+}
 
 input, button, select{
-  font-size:24px;
+  font-size:22px;
   padding:15px;
-  width:90%;
-  border-radius:12px;
-  border:1px solid #aaa;
+  width:92%;
+  border-radius:16px;
+  border:1px solid #cfd8dc;
   margin:8px;
+  outline:none;
+}
+
+input, select{
+  background:white;
+  color:#102030;
+}
+
+button{
+  background:var(--blue);
+  color:white;
+  border:none;
+  font-weight:900;
+  box-shadow:0 5px 12px rgba(0,0,0,0.18);
+}
+
+button:active{
+  transform:scale(0.98);
+}
+
+#startBtn{
+  background:var(--green);
+  color:#062b20;
+}
+
+#menuBtn{
+  background:var(--deep);
+}
+
+#nuovaCorsaBtn{
+  background:#2196f3!important;
+  color:white!important;
 }
 
 #statsBox{
-  background:#f5f5f5;
-  padding:15px;
-  border-radius:12px;
-  margin-bottom:15px;
-  font-size:20px;
   display:none;
+  background:transparent;
+  padding:0;
+  margin:12px auto;
+  max-width:620px;
 }
 
-#app{ display:none; }
+.statsTitle{
+  color:white;
+  font-weight:900;
+  margin-bottom:8px;
+}
+
+.statsGrid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+
+.statCard{
+  background:white;
+  border-radius:16px;
+  padding:10px 6px;
+  box-shadow:0 5px 14px rgba(0,0,0,0.12);
+}
+
+.statNumber{
+  display:block;
+  font-size:30px;
+  font-weight:900;
+  color:var(--navy);
+}
+
+.statLabel{
+  display:block;
+  font-size:13px;
+  font-weight:bold;
+  color:#607d8b;
+  margin-top:3px;
+}
 
 #manualBox{
   display:none;
-  background:#f0f0f0;
+  background:white;
   padding:12px;
-  border-radius:12px;
-  margin-bottom:12px;
+  border-radius:22px;
+  margin:12px auto;
+  max-width:620px;
+  box-shadow:0 8px 22px rgba(0,0,0,0.12);
 }
 
 #menuOperazioni{
   display:none;
+  background:white;
+  border-radius:22px;
+  padding:12px;
+  margin:12px auto;
+  max-width:620px;
+  box-shadow:0 8px 22px rgba(0,0,0,0.12);
+}
+
+#menuOperazioni button{
+  display:block;
+  margin:9px auto;
+  background:#0d47a1;
+}
+
+#menuOperazioni button:last-child{
+  background:#333!important;
+  color:white!important;
 }
 
 #listaBox{
   display:none;
   background:white;
-  border:2px solid #333;
-  border-radius:12px;
+  border:2px solid var(--navy);
+  border-radius:22px;
   padding:15px;
-  margin-top:15px;
+  margin:15px auto;
+  max-width:620px;
   text-align:left;
-  font-size:22px;
+  font-size:21px;
+  box-shadow:0 8px 22px rgba(0,0,0,0.12);
 }
 
 #listaBox h2{
   text-align:center;
+  color:var(--navy);
 }
 
 .rigaLista{
-  padding:8px;
+  padding:10px;
   border-bottom:1px solid #ddd;
 }
 
@@ -91,24 +255,82 @@ input, button, select{
   display:none;
   background:#fff8e1;
   border:2px solid #ff9800;
-  border-radius:12px;
+  border-radius:22px;
   padding:15px;
-  margin-top:15px;
+  margin:15px auto;
+  max-width:620px;
   font-size:22px;
+  box-shadow:0 8px 22px rgba(0,0,0,0.12);
+}
+
+#annullaBox h2{
+  color:#e65100;
 }
 
 #annullaDettagli{
-  font-size:26px;
+  font-size:25px;
   font-weight:bold;
-  line-height:1.4;
+  line-height:1.35;
+}
+
+#confermaAnnullaBtn{
+  background:#ff9800!important;
+  color:white!important;
+}
+
+#erroreLogin{
+  color:#ff1744;
+  font-size:24px;
+}
+
+@media(max-width:420px){
+  body{
+    padding:10px;
+  }
+
+  .headerTitle{
+    font-size:29px;
+  }
+
+  #esito{
+    font-size:32px;
+  }
+
+  #dettagli{
+    font-size:24px;
+  }
+
+  .nomeGrande{
+    font-size:34px;
+  }
+
+  .info{
+    font-size:22px;
+  }
+
+  input, button, select{
+    font-size:20px;
+    width:96%;
+  }
+
+  .statNumber{
+    font-size:25px;
+  }
+
+  .statLabel{
+    font-size:11px;
+  }
 }
 </style>
 </head>
 
 <body>
 
-<div id="login">
-  <h1>CHECK-IN EOLIE</h1>
+<div id="login" class="panel">
+  <div class="header">
+    <div class="headerTitle">🚢 CHECK-IN EOLIE</div>
+    <div class="subtitle">Accesso operatore</div>
+  </div>
   <input id="password" type="password" placeholder="Password">
   <button onclick="accedi()">ACCEDI</button>
   <h2 id="erroreLogin"></h2>
@@ -116,22 +338,41 @@ input, button, select{
 
 <div id="app">
 
-<h1>CHECK-IN EOLIE</h1>
-
-<div id="statsBox">
-  <b>📊 STATISTICHE LIVE</b><br>
-  Totale: <span id="totale">0</span> |
-  Imbarcati: <span id="imbarcati">0</span> |
-  Mancanti: <span id="mancanti">0</span> |
-  Annullati: <span id="annullati">0</span>
+<div class="header">
+  <div class="headerTitle">🚢 CHECK-IN EOLIE</div>
+  <div class="subtitle">Sistema Imbarco Passeggeri</div>
 </div>
 
-<input id="operatore" placeholder="Nome operatore">
-<select id="corsa">
-  <option value="">Caricamento corse...</option>
-</select>
+<div id="statsBox">
+  <div class="statsTitle">📊 STATISTICHE LIVE</div>
+  <div class="statsGrid">
+    <div class="statCard">
+      <span class="statNumber" id="totale">0</span>
+      <span class="statLabel">TOTALE</span>
+    </div>
+    <div class="statCard">
+      <span class="statNumber" id="imbarcati">0</span>
+      <span class="statLabel">IMBARCATI</span>
+    </div>
+    <div class="statCard">
+      <span class="statNumber" id="mancanti">0</span>
+      <span class="statLabel">MANCANTI</span>
+    </div>
+    <div class="statCard">
+      <span class="statNumber" id="annullati">0</span>
+      <span class="statLabel">ANNULLATI</span>
+    </div>
+  </div>
+</div>
 
-<button onclick="iniziaCheckin()" id="startBtn">INIZIA CHECK-IN</button>
+<div class="panel" id="setupBox">
+  <input id="operatore" placeholder="Nome operatore">
+  <select id="corsa">
+    <option value="">Caricamento corse...</option>
+  </select>
+
+  <button onclick="iniziaCheckin()" id="startBtn">INIZIA CHECK-IN</button>
+</div>
 
 <div id="manualBox">
   <input id="codiceManuale" placeholder="Inserisci ticket manualmente">
@@ -139,21 +380,21 @@ input, button, select{
 </div>
 
 <button onclick="toggleMenu()" id="menuBtn" style="display:none;">
-☰ MENU
+⚙️ OPERAZIONI
 </button>
 
 <div id="menuOperazioni">
 
 <button onclick="mostraReport()">
-📄 REPORT FINE CORSA
+📄 REPORT
 </button>
 
 <button onclick="mostraLista('imbarcati')">
-✅ LISTA IMBARCATI
+✅ IMBARCATI
 </button>
 
 <button onclick="mostraLista('mancanti')">
-⏳ LISTA MANCANTI
+⏳ MANCANTI
 </button>
 
 <button onclick="apriAnnullaCheckin()">
@@ -315,6 +556,7 @@ function iniziaCheckin() {
   document.getElementById("operatore").style.display = "none";
   document.getElementById("corsa").style.display = "none";
   document.getElementById("startBtn").style.display = "none";
+  document.getElementById("setupBox").style.display = "none";
 
   document.getElementById("manualBox").style.display = "block";
   document.getElementById("menuBtn").style.display = "inline-block";
@@ -432,7 +674,7 @@ function mostraLista(tipo) {
       return;
     }
 
-    let titolo = tipo === "imbarcati" ? "✅ LISTA IMBARCATI" : "⏳ LISTA MANCANTI";
+    let titolo = tipo === "imbarcati" ? "✅ IMBARCATI" : "⏳ MANCANTI";
 
     let html = "<h2>" + titolo + "</h2>";
     html += "<p style='text-align:center'><b>Corsa:</b> " + corsaAttiva + "</p>";
@@ -675,6 +917,7 @@ function nuovaCorsa() {
   document.getElementById("operatore").style.display = "block";
   document.getElementById("corsa").style.display = "block";
   document.getElementById("startBtn").style.display = "inline-block";
+  document.getElementById("setupBox").style.display = "block";
 
   document.getElementById("manualBox").style.display = "none";
   document.getElementById("menuBtn").style.display = "none";
