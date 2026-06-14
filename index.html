@@ -415,6 +415,12 @@ button:active{
 
 <div id="listaBox"></div>
 
+<button id="chiudiListaBtn"
+        onclick="chiudiLista()"
+        style="display:none;background:#333;color:white;">
+❌ CHIUDI LISTA
+</button>
+
 <div id="annullaBox">
   <h2>↩️ ANNULLA CHECK-IN</h2>
   <input id="ticketAnnulla" placeholder="Inserisci numero ticket">
@@ -580,6 +586,7 @@ function mostra(testo, colore, dettagli = "") {
   document.getElementById("dettagli").innerHTML = dettagli;
 
   document.getElementById("listaBox").style.display = "none";
+  document.getElementById("chiudiListaBtn").style.display = "none";
   document.getElementById("annullaBox").style.display = "none";
 
   riavviaAutomatico();
@@ -698,6 +705,7 @@ function mostraLista(tipo) {
 
     document.getElementById("listaBox").innerHTML = html;
     document.getElementById("listaBox").style.display = "block";
+    document.getElementById("chiudiListaBtn").style.display = "inline-block";
   };
 
   const script = document.createElement("script");
@@ -713,6 +721,11 @@ function mostraLista(tipo) {
 }
 
 
+function chiudiLista() {
+  document.getElementById("listaBox").style.display = "none";
+  document.getElementById("chiudiListaBtn").style.display = "none";
+}
+
 function apriAnnullaCheckin() {
   if (corsaChiusa) return;
 
@@ -726,6 +739,7 @@ function apriAnnullaCheckin() {
   document.body.style.background = "white";
   document.getElementById("menuOperazioni").style.display = "none";
   document.getElementById("listaBox").style.display = "none";
+  document.getElementById("chiudiListaBtn").style.display = "none";
   document.getElementById("reader").innerHTML = "";
   document.getElementById("annullaBox").style.display = "block";
   document.getElementById("ticketAnnulla").value = "";
@@ -890,6 +904,7 @@ function terminaCorsa() {
     document.getElementById("menuBtn").style.display = "none";
     document.getElementById("menuOperazioni").style.display = "none";
     document.getElementById("listaBox").style.display = "none";
+  document.getElementById("chiudiListaBtn").style.display = "none";
     document.getElementById("annullaBox").style.display = "none";
     document.getElementById("nuovaCorsaBtn").style.display = "inline-block";
 
@@ -927,6 +942,7 @@ function nuovaCorsa() {
   document.getElementById("reader").style.display = "none";
   document.getElementById("statsBox").style.display = "none";
   document.getElementById("listaBox").style.display = "none";
+  document.getElementById("chiudiListaBtn").style.display = "none";
   document.getElementById("annullaBox").style.display = "none";
   document.getElementById("nuovaCorsaBtn").style.display = "none";
 
@@ -954,6 +970,7 @@ function verifica(codice) {
   document.getElementById("esito").innerHTML = "CONTROLLO...";
   document.getElementById("dettagli").innerHTML = codice;
   document.getElementById("listaBox").style.display = "none";
+  document.getElementById("chiudiListaBtn").style.display = "none";
   document.getElementById("annullaBox").style.display = "none";
 
   if (scanner) scanner.clear();
