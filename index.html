@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Check-In Eolie</title>
 <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -23,6 +23,13 @@
   -webkit-tap-highlight-color:transparent;
 }
 
+html, body{
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+  -webkit-text-size-adjust:100%;
+}
+
 body{
   margin:0;
   font-family:Arial, Helvetica, sans-serif;
@@ -31,6 +38,7 @@ body{
   background:#f4f8fb;
   color:#102030;
   touch-action:manipulation;
+  overscroll-behavior:none;
 }
 
 .header{
@@ -653,6 +661,47 @@ body{
   }
 }
 
+/* ===== FIX IPHONE: NIENTE RIGA BIANCA DOPO LETTURA ===== */
+body.risultatoAttivo #reader{
+  display:none!important;
+  background:transparent!important;
+  border:0!important;
+  padding:0!important;
+  margin:0!important;
+  box-shadow:none!important;
+  height:0!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+
+body.risultatoAttivo #dettagli{
+  margin-bottom:0!important;
+}
+
+@media(max-width:600px){
+  body.risultatoAttivo{
+    min-height:100dvh;
+  }
+
+  body.risultatoAttivo #esito{
+    margin-top:14px;
+    font-size:31px;
+  }
+
+  body.risultatoAttivo #dettagli{
+    font-size:21px;
+    line-height:1.28;
+  }
+
+  body.risultatoAttivo .nomeGrande{
+    font-size:32px;
+  }
+
+  body.risultatoAttivo .info{
+    font-size:21px;
+  }
+}
+
 </style>
 </head>
 
@@ -793,6 +842,35 @@ body{
 </div>
 
 <script>
+
+// Blocco zoom iPhone: doppio tap, pinch e gesture Safari
+let ultimoTapZoom = 0;
+document.addEventListener('touchend', function(e) {
+  const ora = Date.now();
+  if (ora - ultimoTapZoom <= 300) {
+    e.preventDefault();
+  }
+  ultimoTapZoom = ora;
+}, { passive:false });
+
+document.addEventListener('touchmove', function(e) {
+  if (e.touches && e.touches.length > 1) {
+    e.preventDefault();
+  }
+}, { passive:false });
+
+document.addEventListener('gesturestart', function(e) {
+  e.preventDefault();
+});
+
+document.addEventListener('gesturechange', function(e) {
+  e.preventDefault();
+});
+
+document.addEventListener('gestureend', function(e) {
+  e.preventDefault();
+});
+
 const PASSWORD = "brunoabbondanza";
 
 const API_URL = "https://script.google.com/macros/s/AKfycbyMqWkwY5AwMRV46eHsKdppn9xF8goSAZDhWJHiYlpQnVnZJ6m9oIVSdIIasryOtH6T5w/exec";
@@ -928,6 +1006,7 @@ function beepGiaUsato(){
 function beepErrore(){ beep(400,700); }
 
 function iniziaCheckin() {
+  document.body.classList.remove("risultatoAttivo");
   operatoreAttivo = document.getElementById("operatore").value.trim();
   corsaAttiva = document.getElementById("corsa").value.trim();
   portoCheckinAttivo = document.getElementById("portoCheckin").value.trim();
@@ -971,9 +1050,16 @@ function iniziaCheckin() {
 }
 
 function mostra(testo, colore, dettagli = "") {
+  document.body.classList.add("risultatoAttivo");
   document.body.style.background = colore;
   document.getElementById("esito").innerHTML = testo;
   document.getElementById("dettagli").innerHTML = dettagli;
+
+  // Dopo ogni lettura nascondo completamente il box scanner vuoto
+  // così su iPhone non compare la fascia bianca sotto il risultato.
+  const readerBox = document.getElementById("reader");
+  readerBox.style.display = "none";
+  readerBox.innerHTML = "";
 
   document.getElementById("listaBox").style.display = "none";
   document.getElementById("chiudiListaBtn").style.display = "none";
@@ -1018,6 +1104,7 @@ function aggiornaStatistiche() {
 }
 
 function mostraDettaglioStats(tipo) {
+  document.body.classList.remove("risultatoAttivo");
   if (!ultimoReport) {
     aggiornaStatistiche();
     alert("Statistiche non ancora disponibili");
@@ -1106,6 +1193,7 @@ function mostraDettaglioStats(tipo) {
 }
 
 function chiudiDettaglioStats() {
+  document.body.classList.remove("risultatoAttivo");
   document.getElementById("dettaglioStatsBox").style.display = "none";
   document.getElementById("tornaStatsBtn").style.display = "none";
 
@@ -1242,6 +1330,7 @@ function mostraLista(tipo) {
 
 
 function chiudiLista() {
+  document.body.classList.remove("risultatoAttivo");
   document.getElementById("listaBox").style.display = "none";
   document.getElementById("chiudiListaBtn").style.display = "none";
 
@@ -1260,6 +1349,7 @@ function chiudiLista() {
 }
 
 function apriAnnullaCheckin() {
+  document.body.classList.remove("risultatoAttivo");
   if (corsaChiusa) return;
 
   if (scanner) {
@@ -1444,6 +1534,7 @@ function chiamaApi(params, callback) {
 }
 
 function apriStorico() {
+  document.body.classList.remove("risultatoAttivo");
   if (scanner) {
     scanner.clear();
   }
@@ -1529,6 +1620,7 @@ function eliminaStorico(riga) {
 }
 
 function chiudiStorico() {
+  document.body.classList.remove("risultatoAttivo");
   document.getElementById("storicoBox").style.display = "none";
   document.getElementById("tornaStoricoBtn").style.display = "none";
 
@@ -1628,6 +1720,7 @@ function terminaCorsa() {
 
 
 function nuovaCorsa() {
+  document.body.classList.remove("risultatoAttivo");
 
   corsaChiusa = false;
   bloccato = false;
@@ -1679,6 +1772,7 @@ function nuovaCorsa() {
 function verifica(codice) {
   if (corsaChiusa) return;
 
+  document.body.classList.remove("risultatoAttivo");
   preparaAudio();
 
   if (bloccato) return;
@@ -1786,7 +1880,9 @@ function verifica(codice) {
 function avviaScanner() {
   if (corsaChiusa) return;
 
+  document.body.classList.remove("risultatoAttivo");
   document.body.style.background = "white";
+  document.getElementById("reader").style.display = "block";
 
   document.getElementById("esito").innerHTML =
     "SCANNER ATTIVO<br><small>" + corsaAttiva + "</small><br><small>Porto check-in: " + portoCheckinAttivo + "</small><br><small>Operatore: " + operatoreAttivo + "</small>";
