@@ -475,6 +475,10 @@ button:active{
     <option value="">Caricamento corse...</option>
   </select>
 
+  <select id="portoCheckin">
+    <option value="">Seleziona porto check-in</option>
+  </select>
+
   <button onclick="iniziaCheckin()" id="startBtn">INIZIA CHECK-IN</button>
   <button onclick="apriStorico()" id="storicoBtn" style="background:#0d47a1;color:white;">📊 STORICO CORSE</button>
 </div>
@@ -571,6 +575,7 @@ let corsaChiusa = false;
 let audioCtx = null;
 let corsaAttiva = "";
 let operatoreAttivo = "";
+let portoCheckinAttivo = "";
 let ultimoReport = null;
 let timerStats = null;
 let timerRiavvio = null;
@@ -593,7 +598,11 @@ function caricaCorse() {
     delete window[callbackName];
 
     const select = document.getElementById("corsa");
+    const selectPorto = document.getElementById("portoCheckin");
     select.innerHTML = "";
+    if (selectPorto) {
+      selectPorto.innerHTML = "<option value=''>Seleziona prima la corsa</option>";
+    }
 
     if (!d || d.esito !== "CORSE" || !d.corse || d.corse.length === 0) {
       const opt = document.createElement("option");
@@ -620,6 +629,46 @@ function caricaCorse() {
   script.src = API_URL + "?azione=corse&callback=" + callbackName;
   document.body.appendChild(script);
 }
+
+function caricaPortiCheckin() {
+  const selectPorto = document.getElementById("portoCheckin");
+  const corsa = document.getElementById("corsa").value.trim();
+
+  if (!selectPorto) return;
+
+  selectPorto.innerHTML = "<option value=''>Caricamento porti...</option>";
+
+  if (corsa === "") {
+    selectPorto.innerHTML = "<option value=''>Seleziona prima la corsa</option>";
+    return;
+  }
+
+  chiamaApi({ azione: "portiCheckin", corsa: corsa }, function(d) {
+    selectPorto.innerHTML = "";
+
+    const prima = document.createElement("option");
+    prima.value = "";
+    prima.textContent = "Seleziona porto check-in";
+    selectPorto.appendChild(prima);
+
+    if (!d || d.esito !== "PORTI" || !d.porti || d.porti.length === 0) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "Nessun porto trovato";
+      selectPorto.appendChild(opt);
+      return;
+    }
+
+    for (let i = 0; i < d.porti.length; i++) {
+      const opt = document.createElement("option");
+      opt.value = d.porti[i];
+      opt.textContent = d.porti[i];
+      selectPorto.appendChild(opt);
+    }
+  });
+}
+
+document.getElementById("corsa").addEventListener("change", caricaPortiCheckin);
 
 function accedi() {
   const p = document.getElementById("password").value;
@@ -665,6 +714,7 @@ function beepErrore(){ beep(400,700); }
 function iniziaCheckin() {
   operatoreAttivo = document.getElementById("operatore").value.trim();
   corsaAttiva = document.getElementById("corsa").value.trim();
+  portoCheckinAttivo = document.getElementById("portoCheckin").value.trim();
 
   if (operatoreAttivo === "") {
     alert("Inserisci il nome operatore");
@@ -676,10 +726,16 @@ function iniziaCheckin() {
     return;
   }
 
+  if (portoCheckinAttivo === "") {
+    alert("Seleziona il porto di check-in");
+    return;
+  }
+
   preparaAudio();
 
   document.getElementById("operatore").style.display = "none";
   document.getElementById("corsa").style.display = "none";
+  document.getElementById("portoCheckin").style.display = "none";
   document.getElementById("startBtn").style.display = "none";
   document.getElementById("setupBox").style.display = "none";
 
@@ -1217,7 +1273,8 @@ function caricaStorico() {
           "<b>Adulti:</b> " + (r.adultiTotale || 0) +
           " &nbsp; <b>Bambini:</b> " + (r.bambiniTotale || 0) +
           " &nbsp; <b>Infant:</b> " + (r.infantTotale || 0) + "<br>" +
-          "<b>Operatore:</b> " + (r.operatore || "-") +
+          "<b>Operatore:</b> " + (r.operatore || "-") + "<br>" +
+          "<b>Porto check-in:</b> " + (r.portoCheckin || "-") +
           "</div>" +
           "<button onclick=\"eliminaStorico(" + r.riga + ")\">🗑️ CANCELLA DALLO STORICO</button>" +
           "</div>";
@@ -1249,6 +1306,7 @@ function chiudiStorico() {
   document.getElementById("setupBox").style.display = "block";
   document.getElementById("operatore").style.display = "block";
   document.getElementById("corsa").style.display = "block";
+  document.getElementById("portoCheckin").style.display = "block";
   document.getElementById("startBtn").style.display = "inline-block";
   document.getElementById("storicoBtn").style.display = "inline-block";
 
@@ -1278,6 +1336,7 @@ function salvaStoricoCorsa(callback) {
     + "?azione=salvaStorico"
     + "&corsa=" + encodeURIComponent(corsaAttiva)
     + "&operatore=" + encodeURIComponent(operatoreAttivo)
+    + "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo)
     + "&callback=" + callbackName;
 
   document.body.appendChild(script);
@@ -1355,8 +1414,8 @@ function nuovaCorsa() {
 
   document.getElementById("operatore").style.display = "block";
   document.getElementById("corsa").style.display = "block";
-  document.getElementById("startBtn").style.display = "inline-block";
-  document.getElementById("storicoBtn").style.display = "inline-block";
+  document.getElementById("portoCheckin").style.display = "block";
+  document.getElementById("startBtn").style.display = "inline-block";  document.getElementById("storicoBtn").style.display = "inline-block";
   document.getElementById("setupBox").style.display = "block";
 
   document.getElementById("manualBox").style.display = "none";
@@ -1376,6 +1435,8 @@ function nuovaCorsa() {
   document.getElementById("codiceManuale").value = "";
   document.getElementById("operatore").value = "";
   document.getElementById("corsa").value = "";
+  document.getElementById("portoCheckin").innerHTML = "<option value=''>Seleziona prima la corsa</option>";
+  portoCheckinAttivo = "";
 
   document.getElementById("esito").innerHTML =
     "INSERISCI OPERATORE E CORSA";
@@ -1465,6 +1526,7 @@ function verifica(codice) {
     + "?codice=" + encodeURIComponent(codice)
     + "&corsa=" + encodeURIComponent(corsaAttiva)
     + "&operatore=" + encodeURIComponent(operatoreAttivo)
+    + "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo)
     + "&callback=" + callbackName;
 
   script.onerror = function() {
@@ -1481,7 +1543,7 @@ function avviaScanner() {
   document.body.style.background = "white";
 
   document.getElementById("esito").innerHTML =
-    "SCANNER ATTIVO<br><small>" + corsaAttiva + "</small><br><small>Operatore: " + operatoreAttivo + "</small>";
+    "SCANNER ATTIVO<br><small>" + corsaAttiva + "</small><br><small>Porto check-in: " + portoCheckinAttivo + "</small><br><small>Operatore: " + operatoreAttivo + "</small>";
 
   document.getElementById("dettagli").innerHTML = "";
   document.getElementById("reader").innerHTML = "";
