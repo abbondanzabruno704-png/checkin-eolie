@@ -699,8 +699,12 @@ body{
 
 <div class="panel" id="setupBox">
   <input id="operatore" placeholder="Nome operatore">
-  <select id="corsa">
+  <select id="corsa" onchange="caricaPortiCheckin()">
     <option value="">Caricamento corse...</option>
+  </select>
+
+  <select id="portoCheckin">
+    <option value="">Seleziona porto check-in</option>
   </select>
 
   <button onclick="iniziaCheckin()" id="startBtn">INIZIA CHECK-IN</button>
@@ -798,6 +802,7 @@ let bloccato = false;
 let corsaChiusa = false;
 let audioCtx = null;
 let corsaAttiva = "";
+let portoCheckinAttivo = "";
 let operatoreAttivo = "";
 let ultimoReport = null;
 let timerStats = null;
@@ -849,6 +854,38 @@ function caricaCorse() {
   document.body.appendChild(script);
 }
 
+
+function caricaPortiCheckin() {
+  const selectPorto = document.getElementById("portoCheckin");
+  const corsaSel = document.getElementById("corsa").value.trim();
+
+  selectPorto.innerHTML = "<option value=''>Seleziona porto check-in</option>";
+
+  if (corsaSel === "") return;
+
+  chiamaApi({
+    azione: "portiCheckin",
+    corsa: corsaSel
+  }, function(d) {
+    selectPorto.innerHTML = "<option value=''>Seleziona porto check-in</option>";
+
+    if (!d || d.esito !== "PORTI" || !d.porti || d.porti.length === 0) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "Nessun porto trovato";
+      selectPorto.appendChild(opt);
+      return;
+    }
+
+    for (let i = 0; i < d.porti.length; i++) {
+      const opt = document.createElement("option");
+      opt.value = d.porti[i];
+      opt.textContent = d.porti[i];
+      selectPorto.appendChild(opt);
+    }
+  });
+}
+
 function accedi() {
   const p = document.getElementById("password").value;
 
@@ -893,6 +930,7 @@ function beepErrore(){ beep(400,700); }
 function iniziaCheckin() {
   operatoreAttivo = document.getElementById("operatore").value.trim();
   corsaAttiva = document.getElementById("corsa").value.trim();
+  portoCheckinAttivo = document.getElementById("portoCheckin").value.trim();
 
   if (operatoreAttivo === "") {
     alert("Inserisci il nome operatore");
@@ -904,10 +942,16 @@ function iniziaCheckin() {
     return;
   }
 
+  if (portoCheckinAttivo === "") {
+    alert("Seleziona il porto check-in");
+    return;
+  }
+
   preparaAudio();
 
   document.getElementById("operatore").style.display = "none";
   document.getElementById("corsa").style.display = "none";
+  document.getElementById("portoCheckin").style.display = "none";
   document.getElementById("startBtn").style.display = "none";
   document.getElementById("setupBox").style.display = "none";
 
@@ -1445,7 +1489,8 @@ function caricaStorico() {
           "<b>Adulti:</b> " + (r.adultiTotale || 0) +
           " &nbsp; <b>Bambini:</b> " + (r.bambiniTotale || 0) +
           " &nbsp; <b>Infant:</b> " + (r.infantTotale || 0) + "<br>" +
-          "<b>Operatore:</b> " + (r.operatore || "-") +
+          "<b>Operatore:</b> " + (r.operatore || "-") + "<br>" +
+          "<b>Porto check-in:</b> " + (r.portoCheckin || "-") +
           "</div>" +
           "<button onclick=\"eliminaStorico(" + r.riga + ")\">🗑️ CANCELLA DALLO STORICO</button>" +
           "</div>";
@@ -1477,6 +1522,7 @@ function chiudiStorico() {
   document.getElementById("setupBox").style.display = "block";
   document.getElementById("operatore").style.display = "block";
   document.getElementById("corsa").style.display = "block";
+  document.getElementById("portoCheckin").style.display = "block";
   document.getElementById("startBtn").style.display = "inline-block";
   document.getElementById("storicoBtn").style.display = "inline-block";
 
@@ -1506,6 +1552,7 @@ function salvaStoricoCorsa(callback) {
     + "?azione=salvaStorico"
     + "&corsa=" + encodeURIComponent(corsaAttiva)
     + "&operatore=" + encodeURIComponent(operatoreAttivo)
+    + "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo)
     + "&callback=" + callbackName;
 
   document.body.appendChild(script);
@@ -1558,7 +1605,7 @@ function terminaCorsa() {
 
       document.getElementById("esito").innerHTML = "🛑 CORSA CHIUSA";
       document.getElementById("dettagli").innerHTML =
-        corsaAttiva + "<br><br>" +
+        corsaAttiva + "<br>Porto check-in: " + portoCheckinAttivo + "<br><br>" +
         "Imbarcati: " + (ultimoReport ? ultimoReport.imbarcati : "") + "<br>" +
         "Mancanti: " + (ultimoReport ? ultimoReport.mancanti : "") + "<br>" +
         "Annullati: " + (ultimoReport ? ultimoReport.annullati : "");
@@ -1583,6 +1630,7 @@ function nuovaCorsa() {
 
   document.getElementById("operatore").style.display = "block";
   document.getElementById("corsa").style.display = "block";
+  document.getElementById("portoCheckin").style.display = "block";
   document.getElementById("startBtn").style.display = "inline-block";
   document.getElementById("storicoBtn").style.display = "inline-block";
   document.getElementById("setupBox").style.display = "block";
@@ -1604,6 +1652,8 @@ function nuovaCorsa() {
   document.getElementById("codiceManuale").value = "";
   document.getElementById("operatore").value = "";
   document.getElementById("corsa").value = "";
+  document.getElementById("portoCheckin").innerHTML = "<option value=''>Seleziona porto check-in</option>";
+  portoCheckinAttivo = "";
 
   document.getElementById("esito").innerHTML =
     "INSERISCI OPERATORE E CORSA";
@@ -1693,6 +1743,7 @@ function verifica(codice) {
     + "?codice=" + encodeURIComponent(codice)
     + "&corsa=" + encodeURIComponent(corsaAttiva)
     + "&operatore=" + encodeURIComponent(operatoreAttivo)
+    + "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo)
     + "&callback=" + callbackName;
 
   script.onerror = function() {
@@ -1709,7 +1760,7 @@ function avviaScanner() {
   document.body.style.background = "white";
 
   document.getElementById("esito").innerHTML =
-    "SCANNER ATTIVO<br><small>" + corsaAttiva + "</small><br><small>Operatore: " + operatoreAttivo + "</small>";
+    "SCANNER ATTIVO<br><small>" + corsaAttiva + "</small><br><small>Porto check-in: " + portoCheckinAttivo + "</small><br><small>Operatore: " + operatoreAttivo + "</small>";
 
   document.getElementById("dettagli").innerHTML = "";
   document.getElementById("reader").innerHTML = "";
