@@ -1011,6 +1011,7 @@ function aggiornaStatistiche() {
     API_URL +
     "?azione=stats" +
     "&corsa=" + encodeURIComponent(corsaAttiva) +
+    "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo) +
     "&callback=" + callbackName;
 
   document.body.appendChild(script);
@@ -1071,6 +1072,7 @@ function mostraDettaglioStats(tipo) {
   let html =
     "<h2>" + titolo + "</h2>" +
     "<p><b>Corsa:</b> " + corsaAttiva + "</p>" +
+    "<p><b>Porto check-in:</b> " + portoCheckinAttivo + "</p>" +
     "<div class='dettaglioGrid'>" +
     "<div class='dettaglioRiga'><span>ADULTI</span>" + adulti + "</div>" +
     "<div class='dettaglioRiga'><span>BAMBINI</span>" + bambini + "</div>" +
@@ -1185,6 +1187,7 @@ function mostraLista(tipo) {
 
     let html = "<h2>" + titolo + "</h2>";
     html += "<p style='text-align:center'><b>Corsa:</b> " + corsaAttiva + "</p>";
+    html += "<p style='text-align:center'><b>Porto check-in:</b> " + portoCheckinAttivo + "</p>";
 
     if (!d.lista || d.lista.length === 0) {
       html += "<p style='text-align:center'>Nessun passeggero presente.</p>";
@@ -1231,6 +1234,7 @@ function mostraLista(tipo) {
     "?azione=lista" +
     "&tipo=" + encodeURIComponent(tipo) +
     "&corsa=" + encodeURIComponent(corsaAttiva) +
+    "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo) +
     "&callback=" + callbackName;
 
   document.body.appendChild(script);
@@ -1345,6 +1349,13 @@ function cercaTicketAnnulla() {
       return;
     }
 
+    if (d.esito === "PORTO_NON_PREVISTO") {
+      document.getElementById("annullaDettagli").innerHTML =
+        "❌ PORTO NON PREVISTO PER QUESTO BIGLIETTO<br><br>" +
+        "Porto selezionato: " + portoCheckinAttivo;
+      return;
+    }
+
     document.getElementById("annullaDettagli").innerHTML =
       "❌ TICKET NON TROVATO";
   };
@@ -1354,6 +1365,7 @@ function cercaTicketAnnulla() {
     + "?azione=trovaTicket"
     + "&ticket=" + encodeURIComponent(ticket)
     + "&corsa=" + encodeURIComponent(corsaAttiva)
+    + "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo)
     + "&callback=" + callbackName;
 
   document.body.appendChild(script);
@@ -1403,6 +1415,7 @@ function confermaAnnullaCheckin() {
     + "?azione=annullaCheckin"
     + "&ticket=" + encodeURIComponent(ticketDaAnnullare)
     + "&corsa=" + encodeURIComponent(corsaAttiva)
+    + "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo)
     + "&callback=" + callbackName;
 
   document.body.appendChild(script);
@@ -1731,6 +1744,16 @@ function verifica(codice) {
     if (d.esito === "NO_CODICE") {
       beepErrore();
       mostra("❌ CODICE MANCANTE", "#ff1744");
+      return;
+    }
+
+    if (d.esito === "PORTO_NON_PREVISTO") {
+      beepErrore();
+      mostra(
+        "❌ PORTO NON PREVISTO",
+        "#ff1744",
+        "Questo biglietto non prevede check-in a " + portoCheckinAttivo
+      );
       return;
     }
 
