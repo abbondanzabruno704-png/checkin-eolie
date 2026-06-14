@@ -198,6 +198,40 @@ button:active{
   margin-top:3px;
 }
 
+
+#statsDettaglioBox{
+  display:none;
+  background:white;
+  border-radius:18px;
+  padding:12px;
+  margin:10px auto 0 auto;
+  max-width:620px;
+  box-shadow:0 5px 14px rgba(0,0,0,0.12);
+}
+
+.statsTable{
+  width:100%;
+  border-collapse:collapse;
+  font-size:16px;
+}
+
+.statsTable th{
+  background:var(--navy);
+  color:white;
+  padding:8px 4px;
+}
+
+.statsTable td{
+  padding:9px 4px;
+  border-bottom:1px solid #e0e0e0;
+  font-weight:bold;
+}
+
+.statsTable td:first-child{
+  text-align:left;
+  color:var(--navy);
+}
+
 #manualBox{
   display:none;
   background:white;
@@ -364,6 +398,36 @@ button:active{
       <span class="statLabel">ANNULLATI</span>
     </div>
   </div>
+</div>
+
+<div id="statsDettaglioBox">
+  <div class="statsTitle">DETTAGLIO PASSEGGERI</div>
+  <table class="statsTable">
+    <tr>
+      <th>Tipo</th>
+      <th>Totali</th>
+      <th>Imb.</th>
+      <th>Manc.</th>
+    </tr>
+    <tr>
+      <td>Adulti</td>
+      <td id="adultiTotale">0</td>
+      <td id="adultiImbarcati">0</td>
+      <td id="adultiMancanti">0</td>
+    </tr>
+    <tr>
+      <td>Bambini</td>
+      <td id="bambiniTotale">0</td>
+      <td id="bambiniImbarcati">0</td>
+      <td id="bambiniMancanti">0</td>
+    </tr>
+    <tr>
+      <td>Infant</td>
+      <td id="infantTotale">0</td>
+      <td id="infantImbarcati">0</td>
+      <td id="infantMancanti">0</td>
+    </tr>
+  </table>
 </div>
 
 <div class="panel" id="setupBox">
@@ -605,10 +669,24 @@ function aggiornaStatistiche() {
     ultimoReport = d;
 
     document.getElementById("statsBox").style.display = "block";
+    document.getElementById("statsDettaglioBox").style.display = "block";
+
     document.getElementById("totale").innerHTML = d.totale;
     document.getElementById("imbarcati").innerHTML = d.imbarcati;
     document.getElementById("mancanti").innerHTML = d.mancanti;
     document.getElementById("annullati").innerHTML = d.annullati;
+
+    document.getElementById("adultiTotale").innerHTML = d.adultiTotale || 0;
+    document.getElementById("adultiImbarcati").innerHTML = d.adultiImbarcati || 0;
+    document.getElementById("adultiMancanti").innerHTML = d.adultiMancanti || 0;
+
+    document.getElementById("bambiniTotale").innerHTML = d.bambiniTotale || 0;
+    document.getElementById("bambiniImbarcati").innerHTML = d.bambiniImbarcati || 0;
+    document.getElementById("bambiniMancanti").innerHTML = d.bambiniMancanti || 0;
+
+    document.getElementById("infantTotale").innerHTML = d.infantTotale || 0;
+    document.getElementById("infantImbarcati").innerHTML = d.infantImbarcati || 0;
+    document.getElementById("infantMancanti").innerHTML = d.infantMancanti || 0;
   };
 
   const script = document.createElement("script");
@@ -710,6 +788,7 @@ function mostraLista(tipo) {
     document.body.style.background = "white";
 
     document.getElementById("statsBox").style.display = "none";
+  document.getElementById("statsDettaglioBox").style.display = "none";
     document.getElementById("manualBox").style.display = "none";
     document.getElementById("menuBtn").style.display = "none";
     document.getElementById("menuOperazioni").style.display = "none";
