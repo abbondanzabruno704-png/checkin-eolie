@@ -153,6 +153,12 @@ input, button, select{
 
 <div id="listaBox"></div>
 
+<button id="nuovaCorsaBtn"
+        onclick="nuovaCorsa()"
+        style="display:none;background:#2196f3;color:white;">
+🔄 NUOVA CORSA
+</button>
+
 </div>
 
 <script>
@@ -453,6 +459,7 @@ function terminaCorsa() {
     document.getElementById("menuBtn").style.display = "none";
     document.getElementById("menuOperazioni").style.display = "none";
     document.getElementById("listaBox").style.display = "none";
+    document.getElementById("nuovaCorsaBtn").style.display = "inline-block";
 
     document.body.style.background = "#e0e0e0";
 
@@ -463,6 +470,42 @@ function terminaCorsa() {
       "Mancanti: " + (ultimoReport ? ultimoReport.mancanti : "") + "<br>" +
       "Annullati: " + (ultimoReport ? ultimoReport.annullati : "");
   }, 700);
+}
+
+
+function nuovaCorsa() {
+
+  corsaChiusa = false;
+  bloccato = false;
+  ultimoReport = null;
+
+  if (timerRiavvio) clearTimeout(timerRiavvio);
+  if (timerStats) clearInterval(timerStats);
+
+  document.body.style.background = "white";
+
+  document.getElementById("operatore").style.display = "block";
+  document.getElementById("corsa").style.display = "block";
+  document.getElementById("startBtn").style.display = "inline-block";
+
+  document.getElementById("manualBox").style.display = "none";
+  document.getElementById("menuBtn").style.display = "none";
+  document.getElementById("menuOperazioni").style.display = "none";
+  document.getElementById("reader").style.display = "none";
+  document.getElementById("statsBox").style.display = "none";
+  document.getElementById("listaBox").style.display = "none";
+  document.getElementById("nuovaCorsaBtn").style.display = "none";
+
+  document.getElementById("codiceManuale").value = "";
+  document.getElementById("operatore").value = "";
+  document.getElementById("corsa").value = "";
+
+  document.getElementById("esito").innerHTML =
+    "INSERISCI OPERATORE E CORSA";
+
+  document.getElementById("dettagli").innerHTML = "";
+
+  caricaCorse();
 }
 
 function verifica(codice) {
