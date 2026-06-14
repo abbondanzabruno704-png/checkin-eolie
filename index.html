@@ -1746,6 +1746,12 @@ function verifica(codice) {
       mostra("❌ CODICE MANCANTE", "#ff1744");
       return;
     }
+    if (d.esito === "NO_PORTO") {
+      beepErrore();
+      mostra("❌ PORTO CHECK-IN MANCANTE", "#ff1744", "Seleziona il porto check-in e riprova");
+      return;
+    }
+
 
     if (d.esito === "PORTO_NON_PREVISTO") {
       beepErrore();
