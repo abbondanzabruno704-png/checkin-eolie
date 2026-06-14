@@ -28,29 +28,30 @@ body{
   font-family:Arial, Helvetica, sans-serif;
   text-align:center;
   padding:14px;
-  background:linear-gradient(180deg,#073763 0%,#0b4f86 180px,#f4f8fb 181px);
+  background:#f4f8fb;
   color:#102030;
   touch-action:manipulation;
 }
 
 .header{
-  background:rgba(255,255,255,0.12);
-  color:white;
+  background:white;
+  color:#111;
   padding:18px 14px;
   border-radius:22px;
   margin-bottom:14px;
-  box-shadow:0 8px 20px rgba(0,0,0,0.18);
+  box-shadow:0 8px 20px rgba(0,0,0,0.12);
 }
 
 .headerTitle{
   font-size:34px;
   font-weight:900;
   letter-spacing:0.5px;
+  color:#111;
 }
 
 .subtitle{
   font-size:16px;
-  opacity:0.9;
+  color:#666;
   margin-top:5px;
 }
 
@@ -164,7 +165,7 @@ button:active{
 }
 
 .statsTitle{
-  color:white;
+  color:#111;
   font-weight:900;
   margin-bottom:8px;
 }
@@ -328,7 +329,7 @@ button:active{
 
 <div id="login" class="panel">
   <div class="header">
-    <div class="headerTitle">🚢 CHECK-IN EOLIE</div>
+    <div class="headerTitle">CHECK-IN EOLIE</div>
     <div class="subtitle">Accesso operatore</div>
   </div>
   <input id="password" type="password" placeholder="Password">
@@ -339,12 +340,12 @@ button:active{
 <div id="app">
 
 <div class="header">
-  <div class="headerTitle">🚢 CHECK-IN EOLIE</div>
+  <div class="headerTitle">CHECK-IN EOLIE</div>
   <div class="subtitle">Sistema Imbarco Passeggeri</div>
 </div>
 
 <div id="statsBox">
-  <div class="statsTitle">📊 STATISTICHE LIVE</div>
+  <div class="statsTitle">STATISTICHE LIVE</div>
   <div class="statsGrid">
     <div class="statCard">
       <span class="statNumber" id="totale">0</span>
@@ -620,7 +621,7 @@ function creaTestoReport() {
   }
 
   let testo =
-    "🚢 REPORT FINE CORSA\n\n" +
+    "REPORT FINE CORSA\n\n" +
     "Corsa: " + ultimoReport.corsa + "\n\n" +
     "Totale Passeggeri: " + ultimoReport.totale + "\n" +
     "Imbarcati: " + ultimoReport.imbarcati + "\n" +
