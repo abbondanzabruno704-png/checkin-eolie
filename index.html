@@ -418,7 +418,7 @@ button:active{
 <button id="chiudiListaBtn"
         onclick="chiudiLista()"
         style="display:none;background:#333;color:white;">
-❌ CHIUDI LISTA
+← TORNA AL CHECK-IN
 </button>
 
 <div id="annullaBox">
@@ -703,6 +703,21 @@ function mostraLista(tipo) {
       }
     }
 
+    if (scanner) {
+      scanner.clear();
+    }
+
+    document.body.style.background = "white";
+
+    document.getElementById("statsBox").style.display = "none";
+    document.getElementById("manualBox").style.display = "none";
+    document.getElementById("menuBtn").style.display = "none";
+    document.getElementById("menuOperazioni").style.display = "none";
+    document.getElementById("reader").style.display = "none";
+    document.getElementById("esito").style.display = "none";
+    document.getElementById("dettagli").style.display = "none";
+    document.getElementById("annullaBox").style.display = "none";
+
     document.getElementById("listaBox").innerHTML = html;
     document.getElementById("listaBox").style.display = "block";
     document.getElementById("chiudiListaBtn").style.display = "inline-block";
@@ -724,6 +739,19 @@ function mostraLista(tipo) {
 function chiudiLista() {
   document.getElementById("listaBox").style.display = "none";
   document.getElementById("chiudiListaBtn").style.display = "none";
+
+  document.getElementById("esito").style.display = "block";
+  document.getElementById("dettagli").style.display = "block";
+
+  if (!corsaChiusa && corsaAttiva !== "") {
+    document.getElementById("statsBox").style.display = "block";
+    document.getElementById("manualBox").style.display = "block";
+    document.getElementById("menuBtn").style.display = "inline-block";
+    document.getElementById("reader").style.display = "block";
+    document.body.style.background = "white";
+    aggiornaStatistiche();
+    avviaScanner();
+  }
 }
 
 function apriAnnullaCheckin() {
@@ -930,6 +958,9 @@ function nuovaCorsa() {
   if (timerStats) clearInterval(timerStats);
 
   document.body.style.background = "white";
+
+  document.getElementById("esito").style.display = "block";
+  document.getElementById("dettagli").style.display = "block";
 
   document.getElementById("operatore").style.display = "block";
   document.getElementById("corsa").style.display = "block";
