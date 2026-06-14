@@ -689,7 +689,8 @@ function mostraLista(tipo) {
         html +=
           "<div class='rigaLista'>" +
           (r.nome || "") + " " + (r.cognome || "") +
-          " - " + (r.pax || 0) + " pax" +
+          "<br>📞 " + (r.telefono || "-") +
+          "<br>👥 " + (r.pax || 0) + " pax" +
           " - Ticket " + (r.ticket || "") +
           "</div>";
       }
