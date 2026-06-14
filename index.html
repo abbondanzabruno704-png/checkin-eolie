@@ -437,12 +437,12 @@ button:active{
 
 /* ===== OTTIMIZZAZIONE IPHONE ===== */
 html{
-  min-height:100dvh;
+  min-height:100%;
   background:#f4f8fb;
 }
 
 body{
-  min-height:100dvh;
+  min-height:100%;
   padding-top:calc(10px + env(safe-area-inset-top));
   padding-bottom:calc(14px + env(safe-area-inset-bottom));
 }
@@ -661,23 +661,6 @@ body{
   }
 }
 
-
-body.risultatoAttivo,
-body.risultatoAttivo #app{
-  min-height:100dvh!important;
-}
-
-body.risultatoAttivo::after{
-  content:"";
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  height:60vh;
-  background:inherit;
-  z-index:-1;
-}
-
 /* ===== FIX IPHONE: NIENTE RIGA BIANCA DOPO LETTURA ===== */
 body.risultatoAttivo #reader{
   display:none!important;
@@ -859,11 +842,6 @@ body.risultatoAttivo #dettagli{
 </div>
 
 <script>
-
-function setSfondo(colore) {
-  setSfondo(colore);
-  document.documentElement.style.background = colore;
-}
 
 // Blocco zoom iPhone: doppio tap, pinch e gesture Safari
 let ultimoTapZoom = 0;
@@ -1073,9 +1051,7 @@ function iniziaCheckin() {
 
 function mostra(testo, colore, dettagli = "") {
   document.body.classList.add("risultatoAttivo");
-  setSfondo(colore);
-  const appBox = document.getElementById("app");
-  if (appBox) appBox.style.background = colore;
+  document.body.style.background = colore;
   document.getElementById("esito").innerHTML = testo;
   document.getElementById("dettagli").innerHTML = dettagli;
 
@@ -1192,7 +1168,7 @@ function mostraDettaglioStats(tipo) {
     "</div>" +
     pulsanteLista;
 
-  setSfondo("white");
+  document.body.style.background = "white";
 
   document.getElementById("statsBox").style.display = "none";
   document.getElementById("manualBox").style.display = "none";
@@ -1229,7 +1205,7 @@ function chiudiDettaglioStats() {
     document.getElementById("manualBox").style.display = "block";
     document.getElementById("menuBtn").style.display = "inline-block";
     document.getElementById("reader").style.display = "block";
-    setSfondo("white");
+    document.body.style.background = "white";
     aggiornaStatistiche();
     avviaScanner();
   }
@@ -1321,7 +1297,7 @@ function mostraLista(tipo) {
       scanner.clear();
     }
 
-    setSfondo("white");
+    document.body.style.background = "white";
 
     document.getElementById("statsBox").style.display = "none";
     document.getElementById("dettaglioStatsBox").style.display = "none";
@@ -1366,7 +1342,7 @@ function chiudiLista() {
     document.getElementById("manualBox").style.display = "block";
     document.getElementById("menuBtn").style.display = "inline-block";
     document.getElementById("reader").style.display = "block";
-    setSfondo("white");
+    document.body.style.background = "white";
     aggiornaStatistiche();
     avviaScanner();
   }
@@ -1383,7 +1359,7 @@ function apriAnnullaCheckin() {
   bloccato = true;
   ticketDaAnnullare = "";
 
-  setSfondo("white");
+  document.body.style.background = "white";
   document.getElementById("menuOperazioni").style.display = "none";
   document.getElementById("listaBox").style.display = "none";
   document.getElementById("chiudiListaBtn").style.display = "none";
@@ -1563,7 +1539,7 @@ function apriStorico() {
     scanner.clear();
   }
 
-  setSfondo("white");
+  document.body.style.background = "white";
 
   document.getElementById("setupBox").style.display = "none";
   document.getElementById("statsBox").style.display = "none";
@@ -1660,7 +1636,7 @@ function chiudiStorico() {
   document.getElementById("esito").innerHTML = "INSERISCI OPERATORE E CORSA";
   document.getElementById("dettagli").innerHTML = "";
 
-  setSfondo("white");
+  document.body.style.background = "white";
   caricaCorse();
 }
 
@@ -1730,7 +1706,7 @@ function terminaCorsa() {
       document.getElementById("annullaBox").style.display = "none";
       document.getElementById("nuovaCorsaBtn").style.display = "inline-block";
 
-      setSfondo("#e0e0e0");
+      document.body.style.background = "#e0e0e0";
 
       document.getElementById("esito").innerHTML = "🛑 CORSA CHIUSA";
       document.getElementById("dettagli").innerHTML =
@@ -1753,7 +1729,7 @@ function nuovaCorsa() {
   if (timerRiavvio) clearTimeout(timerRiavvio);
   if (timerStats) clearInterval(timerStats);
 
-  setSfondo("white");
+  document.body.style.background = "white";
 
   document.getElementById("esito").style.display = "block";
   document.getElementById("dettagli").style.display = "block";
@@ -1802,7 +1778,7 @@ function verifica(codice) {
   if (bloccato) return;
   bloccato = true;
 
-  setSfondo("white");
+  document.body.style.background = "white";
   document.getElementById("esito").innerHTML = "CONTROLLO...";
   document.getElementById("dettagli").innerHTML = codice;
   document.getElementById("listaBox").style.display = "none";
@@ -1905,7 +1881,7 @@ function avviaScanner() {
   if (corsaChiusa) return;
 
   document.body.classList.remove("risultatoAttivo");
-  setSfondo("white");
+  document.body.style.background = "white";
   document.getElementById("reader").style.display = "block";
 
   document.getElementById("esito").innerHTML =
