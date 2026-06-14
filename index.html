@@ -248,6 +248,59 @@ button:active{
   color:white!important;
 }
 
+
+
+#storicoBox{
+  display:none;
+  background:white;
+  border:2px solid var(--navy);
+  border-radius:22px;
+  padding:15px;
+  margin:15px auto;
+  max-width:620px;
+  text-align:left;
+  font-size:18px;
+  box-shadow:0 8px 22px rgba(0,0,0,0.12);
+}
+
+#storicoBox h2{
+  text-align:center;
+  color:var(--navy);
+}
+
+.storicoCard{
+  background:#eef3ff;
+  border-radius:16px;
+  padding:12px;
+  margin:10px 0;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+
+.storicoTitolo{
+  font-size:21px;
+  font-weight:900;
+  color:var(--navy);
+}
+
+.storicoDettagli{
+  font-size:17px;
+  line-height:1.45;
+  margin-top:8px;
+}
+
+.storicoCard button{
+  width:100%;
+  margin:8px 0 0 0;
+  background:#b00020!important;
+  color:white!important;
+}
+
+#tornaStoricoBtn{
+  display:none;
+  background:#333!important;
+  color:white!important;
+}
+
 #manualBox{
   display:none;
   background:white;
@@ -423,6 +476,7 @@ button:active{
   </select>
 
   <button onclick="iniziaCheckin()" id="startBtn">INIZIA CHECK-IN</button>
+  <button onclick="apriStorico()" id="storicoBtn" style="background:#0d47a1;color:white;">📊 STORICO CORSE</button>
 </div>
 
 <div id="manualBox">
@@ -468,6 +522,13 @@ button:active{
 <button id="tornaStatsBtn"
         onclick="chiudiDettaglioStats()">
 ← TORNA AL CHECK-IN
+</button>
+
+<div id="storicoBox"></div>
+
+<button id="tornaStoricoBtn"
+        onclick="chiudiStorico()">
+← TORNA A OPERATORE E CORSA
 </button>
 
 <div id="listaBox"></div>
@@ -646,6 +707,8 @@ function mostra(testo, colore, dettagli = "") {
   document.getElementById("chiudiListaBtn").style.display = "none";
   document.getElementById("dettaglioStatsBox").style.display = "none";
   document.getElementById("tornaStatsBtn").style.display = "none";
+  document.getElementById("storicoBox").style.display = "none";
+  document.getElementById("tornaStoricoBtn").style.display = "none";
   document.getElementById("annullaBox").style.display = "none";
 
   riavviaAutomatico();
@@ -757,7 +820,11 @@ function mostraDettaglioStats(tipo) {
   document.getElementById("chiudiListaBtn").style.display = "none";
   document.getElementById("dettaglioStatsBox").style.display = "none";
   document.getElementById("tornaStatsBtn").style.display = "none";
+  document.getElementById("storicoBox").style.display = "none";
+  document.getElementById("tornaStoricoBtn").style.display = "none";
   document.getElementById("annullaBox").style.display = "none";
+  document.getElementById("storicoBox").style.display = "none";
+  document.getElementById("tornaStoricoBtn").style.display = "none";
 
   document.getElementById("dettaglioStatsBox").innerHTML = html;
   document.getElementById("dettaglioStatsBox").style.display = "block";
@@ -1070,6 +1137,152 @@ function confermaAnnullaCheckin() {
 }
 
 
+
+
+function chiamaApi(params, callback) {
+  const callbackName = "api_" + Date.now() + "_" + Math.random().toString(36).substring(2);
+  params.callback = callbackName;
+
+  window[callbackName] = function(d) {
+    delete window[callbackName];
+    if (callback) callback(d);
+  };
+
+  const script = document.createElement("script");
+  script.onerror = function() {
+    delete window[callbackName];
+    if (callback) callback({ esito: "ERRORE_COLLEGAMENTO" });
+  };
+
+  script.src = API_URL + "?" + new URLSearchParams(params).toString();
+  document.body.appendChild(script);
+}
+
+function apriStorico() {
+  if (scanner) {
+    scanner.clear();
+  }
+
+  document.body.style.background = "white";
+
+  document.getElementById("setupBox").style.display = "none";
+  document.getElementById("statsBox").style.display = "none";
+  document.getElementById("manualBox").style.display = "none";
+  document.getElementById("menuBtn").style.display = "none";
+  document.getElementById("menuOperazioni").style.display = "none";
+  document.getElementById("reader").style.display = "none";
+  document.getElementById("esito").style.display = "none";
+  document.getElementById("dettagli").style.display = "none";
+  document.getElementById("listaBox").style.display = "none";
+  document.getElementById("chiudiListaBtn").style.display = "none";
+  document.getElementById("dettaglioStatsBox").style.display = "none";
+  document.getElementById("tornaStatsBtn").style.display = "none";
+  document.getElementById("storicoBox").style.display = "none";
+  document.getElementById("tornaStoricoBtn").style.display = "none";
+  document.getElementById("annullaBox").style.display = "none";
+  document.getElementById("nuovaCorsaBtn").style.display = "none";
+
+  document.getElementById("storicoBox").style.display = "block";
+  document.getElementById("tornaStoricoBtn").style.display = "inline-block";
+  document.getElementById("storicoBox").innerHTML = "<h2>📊 STORICO CORSE</h2><p style='text-align:center'>Caricamento...</p>";
+
+  caricaStorico();
+}
+
+function caricaStorico() {
+  chiamaApi({ azione: "getStorico" }, function(d) {
+    if (!d || d.esito !== "STORICO") {
+      document.getElementById("storicoBox").innerHTML =
+        "<h2>📊 STORICO CORSE</h2><p style='text-align:center'>Storico non disponibile.</p>";
+      return;
+    }
+
+    let html = "<h2>📊 STORICO CORSE</h2>";
+    html += "<p style='text-align:center'><b>Ultime 50 corse chiuse</b></p>";
+
+    if (!d.storico || d.storico.length === 0) {
+      html += "<p style='text-align:center'>Nessuna corsa nello storico.</p>";
+    } else {
+      for (let i = 0; i < d.storico.length; i++) {
+        const r = d.storico[i];
+
+        html +=
+          "<div class='storicoCard'>" +
+          "<div class='storicoTitolo'>" + (r.dataOra || "") + "<br>" + (r.corsa || "") + "</div>" +
+          "<div class='storicoDettagli'>" +
+          "<b>Totale:</b> " + (r.totale || 0) +
+          " &nbsp; <b>Imbarcati:</b> " + (r.imbarcati || 0) + "<br>" +
+          "<b>Mancanti:</b> " + (r.mancanti || 0) +
+          " &nbsp; <b>Annullati:</b> " + (r.annullati || 0) + "<br><br>" +
+          "<b>Adulti:</b> " + (r.adultiTotale || 0) +
+          " &nbsp; <b>Bambini:</b> " + (r.bambiniTotale || 0) +
+          " &nbsp; <b>Infant:</b> " + (r.infantTotale || 0) + "<br>" +
+          "<b>Operatore:</b> " + (r.operatore || "-") +
+          "</div>" +
+          "<button onclick=\"eliminaStorico(" + r.riga + ")\">🗑️ CANCELLA DALLO STORICO</button>" +
+          "</div>";
+      }
+    }
+
+    document.getElementById("storicoBox").innerHTML = html;
+  });
+}
+
+function eliminaStorico(riga) {
+  if (!confirm("Cancellare questa corsa dallo storico?")) {
+    return;
+  }
+
+  chiamaApi({ azione: "eliminaStorico", riga: riga }, function(d) {
+    if (d && d.esito === "STORICO_ELIMINATO") {
+      caricaStorico();
+    } else {
+      alert("Impossibile cancellare la riga dallo storico.");
+    }
+  });
+}
+
+function chiudiStorico() {
+  document.getElementById("storicoBox").style.display = "none";
+  document.getElementById("tornaStoricoBtn").style.display = "none";
+
+  document.getElementById("setupBox").style.display = "block";
+  document.getElementById("operatore").style.display = "block";
+  document.getElementById("corsa").style.display = "block";
+  document.getElementById("startBtn").style.display = "inline-block";
+  document.getElementById("storicoBtn").style.display = "inline-block";
+
+  document.getElementById("esito").style.display = "block";
+  document.getElementById("dettagli").style.display = "block";
+  document.getElementById("esito").innerHTML = "INSERISCI OPERATORE E CORSA";
+  document.getElementById("dettagli").innerHTML = "";
+
+  document.body.style.background = "white";
+  caricaCorse();
+}
+
+function salvaStoricoCorsa(callback) {
+  const callbackName = "storico_" + Date.now();
+
+  window[callbackName] = function(d) {
+    delete window[callbackName];
+    if (callback) callback(d);
+  };
+
+  const script = document.createElement("script");
+  script.onerror = function() {
+    if (callback) callback({ esito: "ERRORE_STORICO" });
+  };
+
+  script.src = API_URL
+    + "?azione=salvaStorico"
+    + "&corsa=" + encodeURIComponent(corsaAttiva)
+    + "&operatore=" + encodeURIComponent(operatoreAttivo)
+    + "&callback=" + callbackName;
+
+  document.body.appendChild(script);
+}
+
 function terminaCorsa() {
   if (!confirm("Terminare la corsa " + corsaAttiva + " ?")) {
     return;
@@ -1084,32 +1297,44 @@ function terminaCorsa() {
   aggiornaStatistiche();
 
   setTimeout(function() {
-    alert(creaTestoReport());
+    salvaStoricoCorsa(function(resStorico) {
+      let msg = creaTestoReport();
 
-    if (scanner) {
-      scanner.clear();
-    }
+      if (resStorico && resStorico.esito === "STORICO_SALVATO") {
+        msg += "\n\n✅ Storico imbarchi salvato";
+      } else {
+        msg += "\n\n⚠️ Storico non salvato: verifica connessione";
+      }
 
-    document.getElementById("reader").innerHTML = "";
-    document.getElementById("reader").style.display = "none";
-    document.getElementById("manualBox").style.display = "none";
-    document.getElementById("menuBtn").style.display = "none";
-    document.getElementById("menuOperazioni").style.display = "none";
-    document.getElementById("listaBox").style.display = "none";
-    document.getElementById("chiudiListaBtn").style.display = "none";
-    document.getElementById("dettaglioStatsBox").style.display = "none";
-    document.getElementById("tornaStatsBtn").style.display = "none";
-    document.getElementById("annullaBox").style.display = "none";
-    document.getElementById("nuovaCorsaBtn").style.display = "inline-block";
+      alert(msg);
 
-    document.body.style.background = "#e0e0e0";
+      if (scanner) {
+        scanner.clear();
+      }
 
-    document.getElementById("esito").innerHTML = "🛑 CORSA CHIUSA";
-    document.getElementById("dettagli").innerHTML =
-      corsaAttiva + "<br><br>" +
-      "Imbarcati: " + (ultimoReport ? ultimoReport.imbarcati : "") + "<br>" +
-      "Mancanti: " + (ultimoReport ? ultimoReport.mancanti : "") + "<br>" +
-      "Annullati: " + (ultimoReport ? ultimoReport.annullati : "");
+      document.getElementById("reader").innerHTML = "";
+      document.getElementById("reader").style.display = "none";
+      document.getElementById("manualBox").style.display = "none";
+      document.getElementById("menuBtn").style.display = "none";
+      document.getElementById("menuOperazioni").style.display = "none";
+      document.getElementById("listaBox").style.display = "none";
+      document.getElementById("chiudiListaBtn").style.display = "none";
+      document.getElementById("dettaglioStatsBox").style.display = "none";
+      document.getElementById("tornaStatsBtn").style.display = "none";
+      document.getElementById("storicoBox").style.display = "none";
+      document.getElementById("tornaStoricoBtn").style.display = "none";
+      document.getElementById("annullaBox").style.display = "none";
+      document.getElementById("nuovaCorsaBtn").style.display = "inline-block";
+
+      document.body.style.background = "#e0e0e0";
+
+      document.getElementById("esito").innerHTML = "🛑 CORSA CHIUSA";
+      document.getElementById("dettagli").innerHTML =
+        corsaAttiva + "<br><br>" +
+        "Imbarcati: " + (ultimoReport ? ultimoReport.imbarcati : "") + "<br>" +
+        "Mancanti: " + (ultimoReport ? ultimoReport.mancanti : "") + "<br>" +
+        "Annullati: " + (ultimoReport ? ultimoReport.annullati : "");
+    });
   }, 700);
 }
 
@@ -1131,6 +1356,7 @@ function nuovaCorsa() {
   document.getElementById("operatore").style.display = "block";
   document.getElementById("corsa").style.display = "block";
   document.getElementById("startBtn").style.display = "inline-block";
+  document.getElementById("storicoBtn").style.display = "inline-block";
   document.getElementById("setupBox").style.display = "block";
 
   document.getElementById("manualBox").style.display = "none";
@@ -1142,6 +1368,8 @@ function nuovaCorsa() {
   document.getElementById("chiudiListaBtn").style.display = "none";
   document.getElementById("dettaglioStatsBox").style.display = "none";
   document.getElementById("tornaStatsBtn").style.display = "none";
+  document.getElementById("storicoBox").style.display = "none";
+  document.getElementById("tornaStoricoBtn").style.display = "none";
   document.getElementById("annullaBox").style.display = "none";
   document.getElementById("nuovaCorsaBtn").style.display = "none";
 
@@ -1172,6 +1400,8 @@ function verifica(codice) {
   document.getElementById("chiudiListaBtn").style.display = "none";
   document.getElementById("dettaglioStatsBox").style.display = "none";
   document.getElementById("tornaStatsBtn").style.display = "none";
+  document.getElementById("storicoBox").style.display = "none";
+  document.getElementById("tornaStoricoBtn").style.display = "none";
   document.getElementById("annullaBox").style.display = "none";
 
   if (scanner) scanner.clear();
