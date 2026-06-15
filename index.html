@@ -909,6 +909,7 @@ let bloccato = false;
 let corsaChiusa = false;
 let audioCtx = null;
 let corsaAttiva = "";
+let dataViaggioAttiva = "";
 let portoCheckinAttivo = "";
 let operatoreAttivo = "";
 let ultimoReport = null;
@@ -924,6 +925,20 @@ function toggleMenu() {
   } else {
     menu.style.display = "none";
   }
+}
+
+function getDataViaggioSelezionata() {
+  const select = document.getElementById("corsa");
+  if (!select || select.selectedIndex < 0) return "";
+
+  const opt = select.options[select.selectedIndex];
+  if (!opt) return "";
+
+  if (opt.dataset && opt.dataset.dataViaggio) {
+    return opt.dataset.dataViaggio;
+  }
+
+  return String(opt.textContent || "").split(" - ")[0].trim();
 }
 
 function caricaCorse() {
@@ -952,6 +967,7 @@ function caricaCorse() {
       const opt = document.createElement("option");
       opt.value = d.corse[i].corsa;
       opt.textContent = d.corse[i].label;
+      opt.dataset.dataViaggio = d.corse[i].dataViaggio || String(d.corse[i].label || "").split(" - ")[0].trim();
       select.appendChild(opt);
     }
   };
@@ -965,6 +981,7 @@ function caricaCorse() {
 function caricaPortiCheckin() {
   const selectPorto = document.getElementById("portoCheckin");
   const corsaSel = document.getElementById("corsa").value.trim();
+  const dataViaggioSel = getDataViaggioSelezionata();
 
   selectPorto.innerHTML = "<option value=''>Seleziona porto check-in</option>";
 
@@ -972,7 +989,8 @@ function caricaPortiCheckin() {
 
   chiamaApi({
     azione: "portiCheckin",
-    corsa: corsaSel
+    corsa: corsaSel,
+    dataViaggio: dataViaggioSel
   }, function(d) {
     selectPorto.innerHTML = "<option value=''>Seleziona porto check-in</option>";
 
@@ -1038,6 +1056,7 @@ function iniziaCheckin() {
   document.body.classList.remove("risultatoAttivo");
   operatoreAttivo = document.getElementById("operatore").value.trim();
   corsaAttiva = document.getElementById("corsa").value.trim();
+  dataViaggioAttiva = getDataViaggioSelezionata();
   portoCheckinAttivo = document.getElementById("portoCheckin").value.trim();
 
   if (operatoreAttivo === "") {
@@ -1047,6 +1066,11 @@ function iniziaCheckin() {
 
   if (corsaAttiva === "") {
     alert("Seleziona prima la corsa");
+    return;
+  }
+
+  if (dataViaggioAttiva === "") {
+    alert("Data viaggio non trovata: seleziona di nuovo la corsa");
     return;
   }
 
@@ -1127,6 +1151,7 @@ function aggiornaStatistiche() {
     API_URL +
     "?azione=stats" +
     "&corsa=" + encodeURIComponent(corsaAttiva) +
+    "&dataViaggio=" + encodeURIComponent(dataViaggioAttiva) +
     "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo) +
     "&callback=" + callbackName;
 
@@ -1189,6 +1214,7 @@ function mostraDettaglioStats(tipo) {
   let html =
     "<h2>" + titolo + "</h2>" +
     "<p><b>Corsa:</b> " + corsaAttiva + "</p>" +
+    "<p><b>Data viaggio:</b> " + dataViaggioAttiva + "</p>" +
     "<p><b>Porto check-in:</b> " + portoCheckinAttivo + "</p>" +
     "<div class='dettaglioGrid'>" +
     "<div class='dettaglioRiga'><span>ADULTI</span>" + adulti + "</div>" +
@@ -1250,7 +1276,8 @@ function creaTestoReport() {
 
   let testo =
     "REPORT FINE CORSA\n\n" +
-    "Corsa: " + ultimoReport.corsa + "\n\n" +
+    "Corsa: " + ultimoReport.corsa + "\n" +
+    "Data viaggio: " + (ultimoReport.dataViaggio || dataViaggioAttiva) + "\n\n" +
     "Totale Passeggeri: " + ultimoReport.totale + "\n" +
     "Imbarcati: " + ultimoReport.imbarcati + "\n" +
     "Mancanti: " + ultimoReport.mancanti + "\n" +
@@ -1307,6 +1334,7 @@ function mostraLista(tipo) {
 
     let html = "<h2>" + titolo + "</h2>";
     html += "<p style='text-align:center'><b>Corsa:</b> " + corsaAttiva + "</p>";
+    html += "<p style='text-align:center'><b>Data viaggio:</b> " + dataViaggioAttiva + "</p>";
     html += "<p style='text-align:center'><b>Porto check-in:</b> " + portoCheckinAttivo + "</p>";
 
     if (!d.lista || d.lista.length === 0) {
@@ -1355,6 +1383,7 @@ function mostraLista(tipo) {
     "?azione=lista" +
     "&tipo=" + encodeURIComponent(tipo) +
     "&corsa=" + encodeURIComponent(corsaAttiva) +
+    "&dataViaggio=" + encodeURIComponent(dataViaggioAttiva) +
     "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo) +
     "&callback=" + callbackName;
 
@@ -1460,6 +1489,14 @@ function cercaTicketAnnulla() {
       return;
     }
 
+    if (d.esito === "ALTRA_DATA") {
+      document.getElementById("annullaDettagli").innerHTML =
+        "❌ TICKET DI ALTRA DATA<br><br>" +
+        "Data biglietto: " + (d.dataViaggio || "") + "<br>" +
+        "Data selezionata: " + dataViaggioAttiva;
+      return;
+    }
+
     if (d.esito === "ALTRA_CORSA") {
       document.getElementById("annullaDettagli").innerHTML =
         "❌ TICKET DI ALTRA CORSA<br><br>" +
@@ -1490,7 +1527,8 @@ function cercaTicketAnnulla() {
     + "?azione=trovaTicket"
     + "&ticket=" + encodeURIComponent(ticket)
     + "&corsa=" + encodeURIComponent(corsaAttiva)
-    + "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo)
+    + "&dataViaggio=" + encodeURIComponent(dataViaggioAttiva) +
+    "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo)
     + "&callback=" + callbackName;
 
   document.body.appendChild(script);
@@ -1540,7 +1578,8 @@ function confermaAnnullaCheckin() {
     + "?azione=annullaCheckin"
     + "&ticket=" + encodeURIComponent(ticketDaAnnullare)
     + "&corsa=" + encodeURIComponent(corsaAttiva)
-    + "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo)
+    + "&dataViaggio=" + encodeURIComponent(dataViaggioAttiva) +
+    "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo)
     + "&callback=" + callbackName;
 
   document.body.appendChild(script);
@@ -1620,7 +1659,7 @@ function caricaStorico() {
 
         html +=
           "<div class='storicoCard'>" +
-          "<div class='storicoTitolo'>" + (r.dataOra || "") + "<br>" + (r.corsa || "") + "</div>" +
+          "<div class='storicoTitolo'>" + (r.dataOra || "") + "<br>" + (r.dataViaggio || "") + " - " + (r.corsa || "") + "</div>" +
           "<div class='storicoDettagli'>" +
           "<b>Totale:</b> " + (r.totale || 0) +
           " &nbsp; <b>Imbarcati:</b> " + (r.imbarcati || 0) + "<br>" +
@@ -1693,6 +1732,7 @@ function salvaStoricoCorsa(callback) {
   script.src = API_URL
     + "?azione=salvaStorico"
     + "&corsa=" + encodeURIComponent(corsaAttiva)
+    + "&dataViaggio=" + encodeURIComponent(dataViaggioAttiva)
     + "&operatore=" + encodeURIComponent(operatoreAttivo)
     + "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo)
     + "&callback=" + callbackName;
@@ -1748,7 +1788,7 @@ function terminaCorsa() {
 
       document.getElementById("esito").innerHTML = "🛑 CORSA CHIUSA";
       document.getElementById("dettagli").innerHTML =
-        corsaAttiva + "<br>Porto check-in: " + portoCheckinAttivo + "<br><br>" +
+        dataViaggioAttiva + " - " + corsaAttiva + "<br>Porto check-in: " + portoCheckinAttivo + "<br><br>" +
         "Imbarcati: " + (ultimoReport ? ultimoReport.imbarcati : "") + "<br>" +
         "Mancanti: " + (ultimoReport ? ultimoReport.mancanti : "") + "<br>" +
         "Annullati: " + (ultimoReport ? ultimoReport.annullati : "");
@@ -1799,6 +1839,7 @@ function nuovaCorsa() {
   document.getElementById("corsa").value = "";
   document.getElementById("portoCheckin").innerHTML = "<option value=''>Seleziona porto check-in</option>";
   portoCheckinAttivo = "";
+  dataViaggioAttiva = "";
 
   document.getElementById("esito").innerHTML =
     "INSERISCI OPERATORE E CORSA";
@@ -1848,6 +1889,17 @@ function verifica(codice) {
         "<span class='info'>Ticket: " + (d.ticket || "") + "</span><br>" +
         "<span class='info'>Corsa: " + (d.corsa || "") + "</span><br>" +
         "<span class='info'>Operatore: " + operatoreAttivo + "</span>"
+      );
+      return;
+    }
+
+    if (d.esito === "ALTRA_DATA") {
+      beepErrore();
+      mostra(
+        "❌ ALTRA DATA",
+        "#ff1744",
+        "Data biglietto: " + (d.dataViaggio || "") + "<br>" +
+        "Data selezionata: " + dataViaggioAttiva
       );
       return;
     }
@@ -1905,6 +1957,7 @@ function verifica(codice) {
   script.src = API_URL
     + "?codice=" + encodeURIComponent(codice)
     + "&corsa=" + encodeURIComponent(corsaAttiva)
+    + "&dataViaggio=" + encodeURIComponent(dataViaggioAttiva)
     + "&operatore=" + encodeURIComponent(operatoreAttivo)
     + "&portoCheckin=" + encodeURIComponent(portoCheckinAttivo)
     + "&callback=" + callbackName;
@@ -1926,7 +1979,7 @@ function avviaScanner() {
   document.getElementById("reader").style.display = "block";
 
   document.getElementById("esito").innerHTML =
-    "SCANNER ATTIVO<br><small>" + corsaAttiva + "</small><br><small>Porto check-in: " + portoCheckinAttivo + "</small><br><small>Operatore: " + operatoreAttivo + "</small>";
+    "SCANNER ATTIVO<br><small>" + dataViaggioAttiva + " - " + corsaAttiva + "</small><br><small>Porto check-in: " + portoCheckinAttivo + "</small><br><small>Operatore: " + operatoreAttivo + "</small>";
 
   document.getElementById("dettagli").innerHTML = "";
   document.getElementById("reader").innerHTML = "";
